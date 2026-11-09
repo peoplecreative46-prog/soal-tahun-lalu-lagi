@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulasi SKD CPNS 2025 — CAT Mandiri</title>
+<style>
+:root{
+  --bg:#0f172a; --bg2:#1e293b; --card:#ffffff; --ink:#0f172a; --muted:#64748b;
+  --brand:#1d4ed8; --brand2:#0ea5e9; --ok:#16a34a; --warn:#f59e0b; --bad:#dc2626;
+  --line:#e2e8f0; --soft:#f1f5f9;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;background:linear-gradient(160deg,#0f172a,#1e3a8a 60%,#0ea5e9);min-height:100vh;color:var(--ink);padding:14px}
+.wrap{max-width:1180px;margin:0 auto}
+.screen{display:none}
+.screen.active{display:block}
+.card{background:var(--card);border-radius:16px;box-shadow:0 18px 45px rgba(2,6,23,.35);padding:22px}
+h1{font-size:26px;line-height:1.25}
+h2{font-size:20px;margin-bottom:10px}
+h3{font-size:16px;margin-bottom:8px}
+p{line-height:1.6}
+.muted{color:var(--muted)}
+.badge{display:inline-block;background:var(--soft);color:var(--brand);border:1px solid var(--line);padding:4px 10px;border-radius:999px;font-size:12px;font-weight:700;letter-spacing:.3px}
+.grid-info{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:16px 0}
+.info{background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:12px}
+.info b{display:block;font-size:20px;color:var(--brand)}
+.info span{font-size:12px;color:var(--muted)}
+label{font-size:13px;font-weight:600;display:block;margin-bottom:6px}
+input[type=text]{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:10px;font-size:15px}
+input[type=text]:focus{outline:2px solid var(--brand2)}
+.check{display:flex;gap:10px;align-items:flex-start;background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-top:10px;font-size:14px}
+.check input{margin-top:3px}
+button{font-family:inherit;font-size:14px;font-weight:700;border:0;border-radius:10px;padding:12px 18px;cursor:pointer;transition:.15s}
+button:active{transform:translateY(1px)}
+.btn{background:var(--brand);color:#fff}
+.btn:hover{background:#1e40af}
+.btn2{background:var(--soft);color:var(--ink);border:1px solid var(--line)}
+.btn2:hover{background:#e2e8f0}
+.btn-warn{background:var(--warn);color:#3b2500}
+.btn-bad{background:var(--bad);color:#fff}
+.btn-ok{background:var(--ok);color:#fff}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.spread{justify-content:space-between}
+/* EXAM */
+.topbar{background:#0b1220;color:#fff;border-radius:14px;padding:12px 16px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:12px}
+.topbar .who{font-size:13px;opacity:.85}
+.timer{font-variant-numeric:tabular-nums;font-size:24px;font-weight:800;background:#111c33;border:1px solid #24365c;padding:6px 14px;border-radius:10px}
+.timer.alert{background:#7f1d1d;border-color:#b91c1c;animation:blink 1s infinite}
+@keyframes blink{50%{opacity:.55}}
+.layout{display:grid;grid-template-columns:1fr 300px;gap:12px}
+@media(max-width:900px){.layout{grid-template-columns:1fr}}
+.qhead{display:flex;justify-content:space-between;align-items:center;gap:10px;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:14px;flex-wrap:wrap}
+.sec-tag{font-size:12px;font-weight:800;padding:4px 10px;border-radius:6px;color:#fff}
+.TWK{background:#1d4ed8}.TIU{background:#0d9488}.TKP{background:#9333ea}
+.qtext{font-size:16px;line-height:1.75;white-space:pre-wrap;margin-bottom:16px}
+.opt{display:flex;gap:12px;align-items:flex-start;border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px;cursor:pointer;background:#fff;transition:.12s}
+.opt:hover{border-color:var(--brand2);background:#f8fbff}
+.opt.sel{border-color:var(--brand);background:#eff6ff;box-shadow:0 0 0 3px rgba(29,78,216,.12)}
+.opt .ltr{flex:0 0 30px;height:30px;border-radius:50%;background:var(--soft);border:1px solid var(--line);display:grid;place-items:center;font-weight:800;font-size:13px}
+.opt.sel .ltr{background:var(--brand);color:#fff;border-color:var(--brand)}
+.opt .txt{font-size:15px;line-height:1.6}
+.opt.correct{border-color:var(--ok);background:#f0fdf4}
+.opt.correct .ltr{background:var(--ok);color:#fff;border-color:var(--ok)}
+.opt.wrong{border-color:var(--bad);background:#fef2f2}
+.opt.wrong .ltr{background:var(--bad);color:#fff;border-color:var(--bad)}
+.navpanel{background:var(--card);border-radius:16px;padding:16px;box-shadow:0 18px 45px rgba(2,6,23,.35);height:fit-content;position:sticky;top:14px}
+.navgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;max-height:340px;overflow:auto;padding:4px}
+.nb{aspect-ratio:1;border-radius:8px;border:1px solid var(--line);background:#fff;font-size:12px;font-weight:700;cursor:pointer;display:grid;place-items:center;padding:0}
+.nb.done{background:#1d4ed8;color:#fff;border-color:#1d4ed8}
+.nb.flag{background:var(--warn);color:#3b2500;border-color:#d97706}
+.nb.cur{outline:3px solid #0ea5e9;outline-offset:1px}
+.legend{font-size:11.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.dot{width:11px;height:11px;border-radius:3px;display:inline-block;margin-right:4px;vertical-align:-1px}
+.sep{grid-column:1/-1;font-size:11px;font-weight:800;color:var(--muted);margin-top:6px}
+/* RESULT */
+.score-hero{text-align:center;padding:10px 0 18px}
+.score-big{font-size:52px;font-weight:900;color:var(--brand)}
+.pill{display:inline-block;padding:8px 18px;border-radius:999px;font-weight:800;color:#fff}
+.pill.pass{background:var(--ok)}.pill.fail{background:var(--bad)}
+table{width:100%;border-collapse:collapse;margin-top:12px;font-size:14px}
+th,td{padding:10px;border-bottom:1px solid var(--line);text-align:left}
+th{background:var(--soft);font-size:12px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted)}
+.bar{height:8px;background:var(--soft);border-radius:6px;overflow:hidden;margin-top:6px}
+.bar>i{display:block;height:100%;background:var(--brand)}
+.exp{background:#f8fafc;border-left:4px solid var(--brand2);border-radius:8px;padding:12px 14px;font-size:14px;line-height:1.7;margin-top:6px}
+.stat{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:14px 0}
+.stat div{background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:10px;text-align:center}
+.stat b{display:block;font-size:22px}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 16px}
+.filters button{padding:8px 14px;font-size:13px}
+.filters button.on{background:var(--brand);color:#fff}
+.qreview{border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+.footnote{font-size:12px;color:var(--muted);margin-top:14px;line-height:1.6}
+@media print{body{background:#fff;padding:0}.noprint{display:none!important}.card{box-shadow:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- ================= START ================= -->
+<section id="s-start" class="screen active">
+  <div class="card">
+    <span class="badge">SIMULASI CAT • SELEKSI KOMPETENSI DASAR</span>
+    <h1 style="margin:10px 0 6px">Simulasi Real SKD CPNS 2025</h1>
+    <p class="muted">110 soal • 100 menit • Sistem penilaian sesuai ketentuan BKN (TWK & TIU benar 5 / salah 0, TKP 1–5).</p>
+
+    <div class="grid-info">
+      <div class="info"><b>30</b><span>TWK — Passing Grade 65</span></div>
+      <div class="info"><b>35</b><span>TIU — Passing Grade 80</span></div>
+      <div class="info"><b>45</b><span>TKP — Passing Grade 166</span></div>
+      <div class="info"><b>550</b><span>Skor Maksimum</span></div>
+    </div>
+
+    <label for="nama">Nama Peserta</label>
+    <input id="nama" type="text" placeholder="Ketik nama Anda..." maxlength="40">
+
+    <div class="check"><input type="checkbox" id="acak"><label for="acak" style="margin:0;font-weight:600">Acak urutan soal (dalam tiap subtes)</label></div>
+    <div class="check"><input type="checkbox" id="latihan"><label for="latihan" style="margin:0;font-weight:600">Mode Latihan — tanpa batas waktu & pembahasan langsung muncul setelah menjawab</label></div>
+
+    <h3 style="margin-top:18px">Petunjuk Pengerjaan</h3>
+    <p class="muted" style="font-size:14px">
+      1. Waktu berjalan otomatis sejak tombol <b>Mulai Ujian</b> ditekan (100 menit).<br>
+      2. Klik opsi A–E untuk menjawab. Gunakan tombol <b>Ragu-ragu</b> untuk menandai soal.<br>
+      3. Navigasi nomor soal di panel kanan; jawaban tersimpan otomatis di perangkat (bisa dilanjutkan bila halaman tertutup).<br>
+      4. Pintasan keyboard: <b>A–E</b> pilih jawaban, <b>←/→</b> pindah soal, <b>Spasi</b> ragu-ragu.<br>
+      5. Ujian berakhir otomatis saat waktu habis. Hasil & pembahasan muncul setelah selesai.
+    </p>
+
+    <div class="row" style="margin-top:18px">
+      <button class="btn" onclick="startExam()">▶ Mulai Ujian</button>
+      <button class="btn2" id="btnResume" style="display:none" onclick="resumeExam()">⟳ Lanjutkan Sesi Tersimpan</button>
+      <button class="btn2" onclick="hardReset()">Hapus Data Tersimpan</button>
+    </div>
+    <p class="footnote">Sumber soal: paket prediksi SKD (TWK, TIU, TKP). Soal figural yang gambarnya tidak tersedia diganti soal TIU setara. Gunakan sebagai latihan mandiri, bukan bocoran soal resmi.</p>
+  </div>
+</section>
+
+<!-- ================= EXAM ================= -->
+<section id="s-exam" class="screen">
+  <div class="topbar">
+    <div>
+      <div style="font-weight:800">SIMULASI SKD CPNS 2025</div>
+      <div class="who" id="whoName">Peserta</div>
+    </div>
+    <div class="row">
+      <span class="who" id="progressTxt">0/110 terjawab</span>
+      <div class="timer" id="timer">100:00</div>
+      <button class="btn-bad noprint" onclick="confirmFinish()">Selesai</button>
+    </div>
+  </div>
+
+  <div class="layout">
+    <div class="card">
+      <div class="qhead">
+        <div class="row">
+          <span class="sec-tag" id="secTag">TWK</span>
+          <b id="qNum">Soal 1</b>
+          <span class="muted" id="qSub" style="font-size:13px"></span>
+        </div>
+        <button class="btn-warn" id="btnFlag" onclick="toggleFlag()">⚑ Ragu-ragu</button>
+      </div>
+      <div class="qtext" id="qText"></div>
+      <div id="optBox"></div>
+      <div id="liveExp"></div>
+      <div class="row spread" style="margin-top:16px;border-top:1px solid var(--line);padding-top:14px">
+        <button class="btn2" onclick="go(-1)">← Sebelumnya</button>
+        <span class="muted" style="font-size:13px" id="posInfo"></span>
+        <button class="btn" onclick="go(1)">Berikutnya →</button>
+      </div>
+    </div>
+
+    <aside class="navpanel">
+      <h3>Navigasi Soal</h3>
+      <div class="navgrid" id="navGrid"></div>
+      <div class="legend">
+        <span><i class="dot" style="background:#1d4ed8"></i>Terjawab</span>
+        <span><i class="dot" style="background:#f59e0b"></i>Ragu-ragu</span>
+        <span><i class="dot" style="background:#fff;border:1px solid #cbd5e1"></i>Kosong</span>
+      </div>
+      <button class="btn2" style="width:100%;margin-top:12px" onclick="jumpFirstEmpty()">Ke soal belum dijawab</button>
+    </aside>
+  </div>
+</section>
+
+<!-- ================= RESULT ================= -->
+<section id="s-result" class="screen">
+  <div class="card">
+    <div class="score-hero">
+      <span class="badge">HASIL SIMULASI</span>
+      <h1 style="margin:10px 0 2px" id="rName">Peserta</h1>
+      <div class="score-big" id="rTotal">0</div>
+      <p class="muted">dari 550 skor maksimum</p>
+      <div style="margin-top:12px"><span class="pill" id="rStatus">—</span></div>
+      <p class="muted" id="rNote" style="margin-top:10px;font-size:14px"></p>
+    </div>
+
+    <table>
+      <thead><tr><th>Subtes</th><th>Benar/Poin</th><th>Skor</th><th>Passing Grade</th><th>Status</th></tr></thead>
+      <tbody id="rTable"></tbody>
+    </table>
+
+    <div class="stat" id="rStat"></div>
+
+    <div class="row noprint" style="margin-top:8px">
+      <button class="btn" onclick="openReview('all')">📖 Lihat Pembahasan</button>
+      <button class="btn2" onclick="openReview('wrong')">Soal Salah Saja</button>
+      <button class="btn2" onclick="window.print()">🖨 Cetak Hasil</button>
+      <button class="btn-bad" onclick="hardReset()">↻ Ulangi Simulasi</button>
+    </div>
+    <p class="footnote">Passing grade umum: TWK 65 • TIU 80 • TKP 166. Peserta harus lulus <b>ketiga</b> ambang batas untuk dinyatakan lulus SKD. TKP tidak memiliki jawaban salah, hanya bobot 1–5 (kosong = 0).</p>
+  </div>
+</section>
+
+<!-- ================= REVIEW ================= -->
+<section id="s-review" class="screen">
+  <div class="card">
+    <div class="row spread">
+      <div><span class="badge">PEMBAHASAN</span><h2 style="margin-top:8px">Review Jawaban &amp; Pembahasan</h2></div>
+      <button class="btn2 noprint" onclick="show('s-result')">← Kembali ke Hasil</button>
+    </div>
+    <div class="filters noprint" id="revFilters"></div>
+    <div id="revBox"></div>
+  </div>
+</section>
+
+</div>
+
+<script>
+/* =========================================================
+   BANK SOAL — TWK (30) | TIU (35) | TKP (45)
+   TWK/TIU: a = indeks kunci (0=A ... 4=E)
+   TKP    : s = array poin tiap opsi
+   ========================================================= */
+const TWK=[
+{q:"Maraknya berita hoax dan disinformasi di media sosial menjadi ancaman serius bagi persatuan dan kesatuan bangsa. Informasi palsu yang sengaja disebar dapat memecah belah masyarakat, memicu konflik, dan merusak tatanan sosial.\n\nTindakan yang paling efektif untuk melawan hoax dan disinformasi adalah...",
+o:["Memblokir semua akun media sosial yang menyebarkan hoax dan melaporkannya kepada pihak berwajib.","Meningkatkan literasi media digital masyarakat, mengedukasi cara memverifikasi informasi, dan aktif menyebarkan konten positif dan faktual.","Mengabaikan berita hoax karena akan hilang dengan sendirinya.","Membuat undang-undang lebih ketat untuk menghukum penyebar hoax dengan hukuman maksimal.","Membatasi akses internet dan media sosial untuk mencegah penyebaran hoax."],a:1,
+p:"Literasi digital adalah pendekatan paling preventif, memberdayakan, dan berkelanjutan. Masyarakat menjadi kritis, mampu memverifikasi informasi, dan turut menyeimbangkan narasi dengan konten faktual. Opsi lain bersifat represif/parsial dan tidak menyelesaikan akar masalah."},
+
+{q:"Indonesia memiliki potensi SDA melimpah, namun kekayaan tersebut belum sepenuhnya dimanfaatkan untuk kemakmuran rakyat dan justru lebih banyak dinikmati pihak asing atau segelintir elit.\n\nImplementasi nasionalisme ekonomi yang paling tepat untuk mengatasi masalah ini adalah...",
+o:["Menerapkan kebijakan berpihak pada kepentingan nasional: hilirisasi industri, peningkatan nilai tambah SDA di dalam negeri, dan penguatan BUMN di sektor strategis.","Menasionalisasi semua perusahaan asing pengelola SDA tanpa kompensasi.","Membiarkan perusahaan asing mengelola SDA sepenuhnya karena lebih efisien dan profesional.","Menghentikan eksploitasi SDA sama sekali demi kelestarian lingkungan.","Membagi-bagikan kekayaan SDA secara merata kepada seluruh rakyat."],a:0,
+p:"Hilirisasi dan peningkatan nilai tambah memastikan kekayaan SDA benar-benar memberi manfaat bagi perekonomian nasional (sejalan Pasal 33 UUD 1945). Nasionalisasi tanpa kompensasi merusak iklim investasi, sedangkan opsi lain ekstrem/tidak produktif."},
+
+{q:"Partisipasi aktif warga negara dalam proses politik adalah kunci mewujudkan kepentingan nasional, namun partisipasi politik generasi muda masih rendah.\n\nUpaya paling tepat untuk meningkatkan partisipasi politik generasi muda adalah...",
+o:["Mewajibkan semua warga mengikuti pemilu dan memberi sanksi bagi yang tidak berpartisipasi.","Mengadakan kampanye politik masif di media sosial menggunakan influencer dan selebriti.","Meningkatkan pendidikan politik dan kesadaran kewarganegaraan sejak dini, memfasilitasi ruang partisipasi kreatif dan relevan, serta membangun kepercayaan terhadap sistem demokrasi.","Menyederhanakan sistem politik dan mengurangi jumlah partai politik.","Membatasi hak politik generasi muda yang dianggap belum matang."],a:2,
+p:"Pendekatan holistik: pendidikan politik menumbuhkan kesadaran, ruang partisipasi kreatif menarik minat, dan kepercayaan publik membuat anak muda melihat politik sebagai sarana perubahan. Ini solusi jangka panjang, bukan sekadar mobilisasi."},
+
+{q:"Indonesia bercita-cita menjadi negara maju dan berdaulat. Untuk mewujudkannya diperlukan sinergi seluruh elemen bangsa: pemerintah, masyarakat sipil, dunia usaha, dan akademisi.\n\nImplementasi nasionalisme yang paling konstruktif adalah...",
+o:["Pemerintah membuat semua keputusan secara sentralistik dan masyarakat tinggal mengikuti.","Setiap elemen bangsa memainkan peran masing-masing secara sinergis dan saling mendukung, berlandaskan nilai Pancasila dan kepentingan nasional.","Masyarakat sipil dan akademisi mengkritik pemerintah terus-menerus tanpa solusi.","Dunia usaha fokus mencari keuntungan tanpa memperhatikan dampak sosial dan lingkungan.","Akademisi hanya fokus penelitian tanpa terlibat masalah riil bangsa."],a:1,
+p:"Sinergi pentahelix/elemen bangsa: pemerintah sebagai regulator, masyarakat sipil sebagai kontrol sosial, dunia usaha sebagai motor ekonomi, akademisi sebagai penyedia inovasi. Inilah nasionalisme progresif berbasis gotong royong."},
+
+{q:"Perkembangan kecerdasan buatan (AI) menawarkan banyak kemudahan, namun menimbulkan kekhawatiran hilangnya lapangan kerja, bias algoritmik, dan ketergantungan pada teknologi asing.\n\nBagaimana seharusnya Indonesia menyikapi perkembangan AI ini?",
+o:["Menolak pengembangan AI karena mengancam kedaulatan bangsa.","Menerima sepenuhnya perkembangan AI tanpa regulasi agar tidak tertinggal.","Mengimpor teknologi AI dari negara maju dan menggunakannya secara masif di semua sektor.","Membiarkan AI berkembang alami tanpa campur tangan pemerintah agar pasar bebas menentukan.","Mendorong pengembangan AI nasional dengan fokus inovasi lokal, etika penggunaan, dan regulasi yang melindungi kepentingan nasional serta tenaga kerja Indonesia."],a:4,
+p:"Sikap adaptif-nasionalis: kembangkan kapasitas sendiri (kemandirian teknologi), disertai etika dan regulasi agar dampak negatif dapat dimitigasi. Menolak total membuat tertinggal; menerima tanpa regulasi berisiko."},
+
+{q:"Pandemi global menunjukkan pentingnya kemandirian dan ketahanan nasional bidang kesehatan. Ketergantungan impor vaksin, obat, dan alat kesehatan dapat menjadi masalah serius saat krisis global.\n\nLangkah prioritas meningkatkan ketahanan kesehatan nasional adalah...",
+o:["Menutup semua pintu masuk bagi tenaga medis asing.","Meningkatkan investasi riset dan pengembangan kesehatan dalam negeri, memproduksi vaksin dan obat sendiri, serta memperkuat sistem kesehatan masyarakat hingga pelosok.","Membeli semua kebutuhan kesehatan dari negara maju agar kualitas terjamin.","Mengandalkan bantuan dan donasi negara lain serta organisasi internasional.","Membiarkan mekanisme pasar bebas menentukan sistem kesehatan nasional."],a:1,
+p:"Kemandirian (riset + produksi dalam negeri) dan pemerataan layanan adalah inti ketahanan kesehatan. Opsi lain justru memperbesar ketergantungan."},
+
+{q:"Anda peneliti di lembaga riset pemerintah. Data Anda menunjukkan produk pertanian unggulan yang dipromosikan pemerintah ternyata berdampak negatif terhadap lingkungan dalam jangka panjang. Publikasi data dapat menimbulkan kontroversi dan menghambat program pemerintah.\n\nSebagai peneliti yang menjunjung integritas ilmiah dan tanggung jawab publik, tindakan paling tepat adalah...",
+o:["Menyembunyikan data demi reputasi lembaga dan menghindari konflik dengan pemerintah.","Memodifikasi data agar terlihat positif dan sesuai narasi pemerintah.","Membatasi publikasi hanya di internal lembaga dan menunggu arahan atasan.","Membocorkan data ke media secara anonim untuk menciptakan tekanan publik tanpa melalui jalur resmi.","Mempublikasikan data secara jujur dan transparan melalui jurnal ilmiah serta forum publik yang relevan, dan mengomunikasikannya kepada pemerintah dan masyarakat secara bertanggung jawab."],a:4,
+p:"Integritas ilmiah menuntut kejujuran dan transparansi melalui saluran yang sah, disertai komunikasi bertanggung jawab. Manipulasi/penyembunyian data melanggar etika penelitian dan merugikan kepentingan publik jangka panjang."},
+
+{q:"Anda pejabat pengadaan barang/jasa. Atasan menekan Anda memenangkan perusahaan yang dekat dengan pejabat tinggi, padahal penawaran tidak memenuhi syarat teknis dan harganya lebih tinggi.\n\nSikap paling tepat sebagai pejabat berintegritas adalah...",
+o:["Mengalah pada tekanan atasan demi hubungan baik dan kelancaran karier.","Mencari celah aturan untuk membenarkan pemenangan secara formal.","Menyerahkan evaluasi sepenuhnya kepada tim teknis agar keputusan sesuai keinginan atasan secara tidak langsung.","Mengundurkan diri sebagai protes, namun merahasiakan masalahnya.","Menolak tegas tekanan atasan, tetap mengevaluasi secara objektif dan transparan berdasarkan kriteria yang ditetapkan, serta siap menghadapi konsekuensinya."],a:4,
+p:"Prinsip pengadaan: adil, transparan, akuntabel, efisien. Menolak intervensi dan tetap objektif adalah wujud ketangguhan integritas; opsi lain merupakan bentuk kompromi terhadap penyimpangan."},
+
+{q:"Anda jurnalis media nasional dan memperoleh informasi eksklusif dugaan pelanggaran etika berat seorang tokoh publik yang dikenal bersih. Publikasi berdampak besar pada reputasi tokoh dan kepercayaan publik.\n\nTindakan paling tepat adalah...",
+o:["Menunda publikasi hingga isu mereda demi hubungan baik dan menghindari konflik hukum.","Mempublikasikan secara sensasional demi rating tanpa verifikasi mendalam.","Membocorkan ke jurnalis pesaing secara anonim untuk menghindari tanggung jawab hukum.","Melakukan verifikasi mendalam dan berimbang dari berbagai sumber kredibel, lalu mempublikasikan secara jujur, akurat, dan bertanggung jawab dengan memperhatikan etika jurnalistik serta hak jawab.","Tidak mempublikasikan sama sekali demi nama baik tokoh meski informasi terbukti benar."],a:3,
+p:"Kode Etik Jurnalistik: akurat, berimbang, verifikasi, dan menghormati hak jawab. Kepentingan publik atas informasi benar harus dipenuhi secara bertanggung jawab, bukan sensasional atau ditutup-tutupi."},
+
+{q:"Anda atlet tim nasional. Pelatih memberi perlakuan istimewa kepada atlet lain yang dekat dengan manajemen (fasilitas latihan dan kesempatan bermain), sehingga berpotensi menurunkan performa tim.\n\nTindakan paling tepat adalah...",
+o:["Menerima dengan lapang dada dan fokus latihan sendiri demi keharmonisan tim.","Membalas dengan sabotase kecil atau menyebarkan gosip negatif.","Mengomunikasikan secara terbuka dan santun kepada pelatih serta manajemen, mengajak berdialog mencari solusi bersama yang adil bagi semua atlet.","Diam-diam menggalang kelompok oposisi internal.","Mengundurkan diri sebagai protes, namun merahasiakan masalahnya."],a:2,
+p:"Komunikasi asertif, terbuka, dan santun menjaga sportivitas sekaligus keutuhan tim. Diam berarti membiarkan ketidakadilan; sabotase/mundur merugikan tim dan tidak menyelesaikan masalah."},
+
+{q:"Anda kepala desa di daerah terpencil dengan alokasi vaksin terbatas. Ada tekanan kelompok berpengaruh agar anggotanya diprioritaskan.\n\nTindakan paling bijaksana dan adil adalah...",
+o:["Memenuhi permintaan kelompok berpengaruh demi stabilitas sosial.","Membagi vaksin secara acak kepada pendaftar pertama tanpa mempertimbangkan risiko.","Menetapkan kriteria prioritas vaksinasi yang jelas dan transparan (usia rentan, kondisi kesehatan, profesi berisiko tinggi) serta mengomunikasikannya terbuka kepada seluruh warga.","Berkonsultasi tertutup dengan tokoh masyarakat tanpa melibatkan warga.","Menyimpan sebagian vaksin untuk keluarga dan kerabat."],a:2,
+p:"Keadilan distributif berbasis kriteria objektif + transparansi = keputusan yang akuntabel dan dapat diterima publik. Nepotisme dan undian mengabaikan prinsip prioritas kesehatan."},
+
+{q:"Anda negosiator perdagangan. Negara mitra menawarkan insentif investasi sangat menarik, tetapi mensyaratkan pelonggaran standar lingkungan dan ketenagakerjaan Indonesia.\n\nSikap paling tepat adalah...",
+o:["Menerima demi target pertumbuhan ekonomi jangka pendek.","Mencari kompromi kreatif: insentif tetap menarik namun standar lingkungan dan ketenagakerjaan esensial tetap terjaga, disertai mekanisme pengawasan dan penegakan hukum yang efektif.","Menolak tegas dan menghentikan negosiasi.","Menerima sebagian tawaran sambil mengabaikan syarat pelonggaran yang dianggap kurang signifikan.","Menunda negosiasi dan meminta arahan pemerintah pusat."],a:1,
+p:"Negosiasi berintegritas mencari win-win tanpa mengorbankan pembangunan berkelanjutan. Kompromi kreatif menjaga investasi sekaligus melindungi lingkungan dan pekerja."},
+
+{q:"Ancaman terorisme dan radikalisme masih menjadi tantangan keamanan negara.\n\nImplementasi bela negara paling efektif untuk mencegah penyebaran ideologi terorisme dan radikalisme di masyarakat adalah...",
+o:["Membentuk satuan tugas khusus untuk menindak tegas pelaku terorisme.","Mengintensifkan razia dan pengawasan kelompok yang dicurigai radikal.","Menutup akses internet dan media sosial yang dianggap menyebarkan konten radikal.","Mengasingkan semua terduga teroris ke pulau terpencil.","Meningkatkan pemahaman agama yang moderat dan toleran serta memperkuat nilai-nilai Pancasila sebagai ideologi bangsa."],a:4,
+p:"Pencegahan ideologis bersifat mendasar dan berkelanjutan: membangun benteng pemikiran melalui moderasi beragama dan penguatan Pancasila. Opsi lain represif dan hanya menyentuh gejala."},
+
+{q:"Kerusakan lingkungan dan bencana alam menjadi ancaman nyata bagi keberlangsungan hidup bangsa.\n\nImplementasi bela negara paling relevan untuk mengatasi masalah ini adalah...",
+o:["Menyalahkan pemerintah dan industri atas kerusakan lingkungan.","Demonstrasi menuntut perusahaan perusak lingkungan bertanggung jawab.","Menggalang dana untuk korban bencana dan rehabilitasi lingkungan.","Meningkatkan kesadaran dan partisipasi masyarakat menjaga kelestarian lingkungan serta menerapkan gaya hidup ramah lingkungan.","Mendesak pemerintah mengeluarkan undang-undang lingkungan yang lebih ketat."],a:3,
+p:"Bela negara non-fisik: membangun budaya cinta lingkungan lewat partisipasi dan perubahan perilaku sehari-hari. Bersifat preventif, mendasar, dan berdampak jangka panjang."},
+
+{q:"Di era digital, persaingan antarbangsa juga terjadi di bidang teknologi dan informasi.\n\nImplementasi bela negara paling strategis menghadapi persaingan global tersebut adalah...",
+o:["Meningkatkan kualitas pendidikan dan riset bidang teknologi informasi serta mengembangkan industri teknologi dalam negeri.","Membatasi akses informasi luar negeri dan mempromosikan konten lokal.","Menggunakan teknologi informasi untuk memata-matai negara lain.","Mengajak kerja sama negara maju untuk alih teknologi saja.","Membiarkan pasar bebas teknologi tanpa intervensi pemerintah."],a:0,
+p:"Kemandirian teknologi dibangun dari SDM (pendidikan & riset) dan industri dalam negeri. Inilah strategi jangka panjang paling berkelanjutan."},
+
+{q:"Semangat gotong royong dan solidaritas sosial semakin terkikis di era modern.\n\nImplementasi bela negara paling relevan untuk memperkuat kembali nilai tersebut adalah...",
+o:["Meningkatkan pendidikan karakter dan nilai Pancasila sejak usia dini melalui keluarga, sekolah, dan lingkungan masyarakat.","Mewajibkan semua warga mengikuti kerja bakti secara rutin.","Mengadakan festival budaya dan kegiatan sosial melibatkan seluruh lapisan masyarakat.","Membuat perda wajib gotong royong berkala di setiap desa/kelurahan.","Mengampanyekan gotong royong melalui media massa dan media sosial."],a:0,
+p:"Internalisasi nilai melalui pendidikan karakter adalah pendekatan paling mendasar; hasilnya menetap karena menjadi karakter, bukan sekadar kepatuhan pada kewajiban."},
+
+{q:"Munculnya gerakan separatisme menjadi ancaman keutuhan NKRI.\n\nSebagai pelajar, bentuk implementasi bela negara paling tepat untuk meredam potensi separatisme adalah...",
+o:["Mempelajari sejarah perjuangan bangsa untuk menumbuhkan nasionalisme.","Mengikuti organisasi kemasyarakatan bidang kebangsaan.","Melaporkan setiap aktivitas mencurigakan kepada aparat.","Mempersenjatai diri dan siap berperang melawan kelompok separatis.","Membangun komunikasi dan dialog konstruktif dengan berbagai kelompok masyarakat, termasuk yang berbeda pandangan."],a:4,
+p:"Dialog konstruktif menyentuh akar masalah (rasa ketidakadilan/keterasingan) dan mencegah konflik berkepanjangan — pendekatan preventif paling berkelanjutan bagi warga sipil/pelajar."},
+
+{q:"Kualitas SDM Indonesia masih perlu ditingkatkan agar mampu bersaing global.\n\nImplementasi bela negara paling strategis untuk meningkatkan kualitas SDM bangsa adalah...",
+o:["Mewajibkan semua warga mengikuti pelatihan vokasi.","Mengirim sebanyak mungkin pelajar ke luar negeri.","Meningkatkan kualitas pendidikan di semua jenjang serta mendorong inovasi dan riset di berbagai bidang.","Membatasi masuknya tenaga kerja asing.","Memberi beasiswa hanya kepada anak dari keluarga kurang mampu."],a:2,
+p:"Perbaikan mutu pendidikan menyeluruh + riset/inovasi adalah investasi SDM paling komprehensif dan berkelanjutan."},
+
+{q:"Meningkatnya distrust publik terhadap lembaga penegak hukum menjadi tantangan serius negara hukum.\n\nSebagai mahasiswa hukum yang menjunjung nilai UUD 1945, tindakan paling konstruktif untuk mengembalikan kepercayaan publik adalah...",
+o:["Mengkritik kinerja penegak hukum secara terbuka di media sosial.","Mengadakan demonstrasi besar-besaran menuntut perbaikan kinerja.","Mempelajari dan memahami sistem hukum Indonesia secara mendalam serta aktif mengedukasi masyarakat tentang pentingnya supremasi hukum.","Menghindari berurusan dengan penegak hukum agar tidak menjadi korban.","Membentuk organisasi mahasiswa anti korupsi yang mengawasi dan melaporkan pelanggaran."],a:2,
+p:"Sesuai peran sebagai mahasiswa hukum: penguasaan substansi + edukasi publik membangun budaya hukum positif dan kepercayaan secara konstruktif."},
+
+{q:"Anda menemukan konten negatif berisi hoax dan ujaran kebencian yang berpotensi memecah belah persatuan NKRI di media sosial.\n\nTindakan paling tepat sesuai nilai NKRI adalah...",
+o:["Meneruskan konten agar teman-teman waspada.","Membalas dengan komentar pedas dan provokatif agar pelaku jera.","Mengabaikannya karena dianggap sampah informasi.","Mencari tahu kebenaran informasi dan melaporkan konten negatif kepada pihak berwenang atau platform media sosial.","Membuat konten tandingan bernarasi sama dengan bahasa lebih halus."],a:3,
+p:"Verifikasi + pelaporan melalui mekanisme resmi = sikap kritis, bertanggung jawab, dan taat hukum. Meneruskan konten justru memperluas penyebaran."},
+
+{q:"Konflik antarumat beragama masih menjadi isu sensitif, padahal Bhinneka Tunggal Ika mengajarkan toleransi.\n\nKegiatan paling efektif memperkuat kerukunan antarumat beragama di lingkungan sekitar adalah...",
+o:["Forum diskusi rutin antartokoh agama membahas perbedaan teologis.","Kegiatan sosial bersama yang melibatkan semua umat beragama, seperti bakti sosial, kerja bakti, atau kegiatan seni budaya.","Membiarkan setiap agama berjalan sendiri agar tidak terjadi kesalahpahaman.","Mempromosikan agama sendiri lebih gencar agar agama lain tertarik.","Menghindari pergaulan dengan orang berbeda agama."],a:1,
+p:"Interaksi praktis dalam kegiatan sosial membangun saling mengenal dan persaudaraan pada tujuan kemanusiaan universal — lebih efektif daripada perdebatan teologis atau penghindaran."},
+
+{q:"Kerusakan lingkungan hidup menjadi isu global yang juga dihadapi Indonesia.\n\nDikaitkan nilai Pancasila dan NKRI, tindakan paling bertanggung jawab sebagai warga negara adalah...",
+o:["Menggunakan SDA sebanyak-banyaknya demi pertumbuhan ekonomi.","Mendukung kebijakan pro-lingkungan meski memperlambat pertumbuhan ekonomi.","Mengabaikan isu lingkungan karena terlalu besar bagi individu.","Demonstrasi anarkis menentang perusahaan perusak lingkungan.","Memulai perubahan dari diri sendiri dengan gaya hidup ramah lingkungan dan mengajak orang lain melakukan hal yang sama."],a:4,
+p:"Tanggung jawab individual yang menular (role model) adalah kontribusi nyata dan berkelanjutan, sejalan dengan amanah menjaga alam bagi generasi mendatang."},
+
+{q:"Sering terjadi perbedaan pandangan politik yang tajam antarkelompok masyarakat.\n\nDikaitkan sila Persatuan Indonesia dan sila Kerakyatan, sikap paling bijaksana adalah...",
+o:["Memaksakan pandangan kelompok sendiri agar tercipta keseragaman.","Menghindari diskusi politik agar tidak terjadi konflik.","Mengembangkan sikap saling menghormati perbedaan pandangan politik dan mengutamakan musyawarah untuk mencapai mufakat.","Membentuk kelompok politik eksklusif dan menjauhi yang berbeda.","Menyerang kelompok politik berbeda di media sosial agar dominan."],a:2,
+p:"Sila ke-3 menuntut persatuan dalam keberagaman; sila ke-4 menuntut musyawarah-mufakat. Kombinasi keduanya adalah saling menghormati + dialog."},
+
+{q:"Globalisasi ekonomi berpotensi menghilangkan kedaulatan ekonomi bangsa karena ketergantungan pasar global.\n\nDikaitkan Pasal 33 UUD 1945, kebijakan paling strategis menjaga kedaulatan ekonomi adalah...",
+o:["Mendorong pengembangan ekonomi kerakyatan berbasis potensi SDA dan SDM dalam negeri.","Membuka lebar pintu investasi asing agar ekonomi maju dan modern.","Meningkatkan impor agar masyarakat punya banyak pilihan dan harga murah.","Mengikuti semua kebijakan ekonomi global negara maju.","Menyerahkan sepenuhnya mekanisme pasar bebas tanpa intervensi pemerintah."],a:0,
+p:"Pasal 33 menekankan perekonomian disusun sebagai usaha bersama berdasar asas kekeluargaan (ekonomi kerakyatan) dan kemandirian berbasis potensi nasional."},
+
+{q:"Bacalah teks berikut!\n\nMedia sosial mengubah lanskap politik: partisipasi meluas, warga dapat berinteraksi langsung dengan politisi, mengorganisir gerakan sosial, dan kampanye menjadi lebih personal serta terarah. Namun, algoritma media sosial cenderung memperkuat ruang gema (echo chamber) dan gelembung filter (filter bubble), di mana pengguna hanya terpapar informasi dan pandangan yang sesuai preferensinya sendiri. Hal ini mempersempit spektrum perspektif yang diterima individu dan mengurangi paparan terhadap pandangan yang berbeda. Konten emosional dan provokatif lebih viral, mendorong polaritas ekstrem dan mengurangi diskusi bernuansa. Anonimitas mendorong perilaku agresif serta penyebaran misinformasi. Akibatnya media sosial kerap menjadi arena pertempuran politik yang terpolarisasi, bukan ruang dialog konstruktif.\n\nKonsekuensi paling merugikan dari peran media sosial dalam polarisasi politik terhadap proses demokrasi adalah...",
+o:["Kampanye politik menjadi lebih personal dan terarah.","Partisipasi politik menjadi lebih luas.","Algoritma media sosial mempersempit spektrum perspektif dan mengurangi paparan terhadap pandangan yang berbeda.","Media sosial memfasilitasi pengorganisasian gerakan sosial secara efektif.","Konten emosional dan provokatif lebih viral sehingga mendorong polaritas ekstrem."],a:2,
+p:"Teks eksplisit: echo chamber/filter bubble mempersempit perspektif. Bagi demokrasi, hilangnya pertukaran gagasan lintas pandangan adalah kerugian paling mendasar karena mematikan dialog dan deliberasi. Opsi A, B, D justru dampak positif."},
+
+{q:"Bacalah teks berikut!\n\nEkonomi kreatif (seni, desain, mode, musik, film, permainan, kuliner) mengandalkan ide, kreativitas, dan pengetahuan sebagai aset utama serta berpotensi menciptakan lapangan kerja dan memperkuat identitas budaya. Di era digital sektor ini berkembang pesat ditopang e-commerce dan media sosial. Pemerintah memperkuat infrastruktur digital, memberi pelatihan dan pendampingan, serta memperluas akses pembiayaan. Namun, kurangnya perlindungan hak kekayaan intelektual (HKI) masih menjadi masalah serius yang menghambat inovasi dan investasi. Kesenjangan keterampilan digital juga perlu diatasi, sementara persaingan global menuntut inovasi dan peningkatan kualitas produk.\n\nTantangan paling mendasar yang perlu diatasi untuk memastikan keberlanjutan dan daya saing ekonomi kreatif Indonesia di tingkat global adalah...",
+o:["Memperluas akses pembiayaan melalui skema kredit dan investasi.","Memperkuat infrastruktur digital.","Meningkatkan pelatihan dan pendampingan pelaku ekonomi kreatif.","Memperketat persaingan global yang menuntut inovasi.","Memperkuat perlindungan hak kekayaan intelektual (HKI) untuk mendorong inovasi dan investasi jangka panjang."],a:4,
+p:"Teks menyebut HKI sebagai masalah serius yang menghambat inovasi dan investasi. HKI adalah fondasi pelindung ide/kreativitas; tanpa itu, dukungan pembiayaan, infrastruktur, dan pelatihan menjadi kurang efektif jangka panjang."},
+
+{q:"Bacalah teks berikut!\n\nPerubahan iklim mengancam ketahanan pangan global: suhu ekstrem, perubahan pola curah hujan, kekeringan, banjir, ledakan hama, dan degradasi lahan mengganggu produksi pertanian. Negara berkembang paling rentan karena ketergantungan pada pertanian tadah hujan, keterbatasan infrastruktur, dan kapasitas adaptasi rendah. Konflik serta migrasi akibat kelangkaan pangan diperkirakan meningkat. Untuk mengatasi tantangan ini diperlukan transformasi sistem pangan global yang mendasar. Pertanian berkelanjutan dan diversifikasi sumber pangan menjadi kunci meningkatkan ketahanan pangan terhadap perubahan iklim, didukung riset, kerja sama internasional, dan kebijakan terintegrasi.\n\nPendekatan paling komprehensif dan strategis untuk menjamin ketahanan pangan global di tengah ancaman perubahan iklim adalah...",
+o:["Meningkatkan bantuan pangan darurat ke wilayah terdampak bencana.","Mengembangkan teknologi pertanian tahan kekeringan.","Mendorong negara maju mengurangi emisi gas rumah kaca secara drastis.","Melakukan transformasi sistem pangan global menuju pertanian berkelanjutan dan diversifikasi sumber pangan.","Memperkuat infrastruktur pertanian dan irigasi di negara berkembang."],a:3,
+p:"Teks eksplisit menyebut transformasi sistem pangan sebagai kebutuhan mendasar. Opsi lain benar tetapi parsial dan/atau reaktif; transformasi mencakup perubahan sistemik produksi–konsumsi."},
+
+{q:"Bacalah teks berikut!\n\nData pribadi telah menjadi komoditas berharga. Perusahaan teknologi, pemerintah, dan organisasi mengumpulkan data dalam skala besar; kenyamanan layanan digital sering dibayar dengan pengorbanan privasi. Kebocoran data menimbulkan kerugian finansial, pencurian identitas, dan dampak psikologis; penyalahgunaan data memicu manipulasi opini, diskriminasi, dan pelanggaran HAM; surveilans massal mengancam kebebasan sipil. Diperlukan pendekatan holistik: regulasi kuat, teknologi privasi inovatif, literasi digital, dan kesadaran etika pengembang teknologi serta organisasi pengelola data. Keseimbangan inovasi, keamanan, dan privasi menjadi kunci membangun ekosistem digital yang bertanggung jawab dan berpusat pada manusia.\n\nPendekatan paling fundamental dan etis untuk menjamin perlindungan data pribadi adalah...",
+o:["Menerapkan regulasi ketat dan hukuman berat.","Mengembangkan enkripsi dan anonimisasi canggih.","Meningkatkan literasi digital masyarakat.","Mendorong perusahaan lebih transparan dan bertanggung jawab.","Membangun kesadaran etika di kalangan pengembang teknologi dan organisasi tentang pentingnya privasi sebagai hak asasi manusia."],a:4,
+p:"Kesadaran etika adalah fondasi yang mendasari efektivitas regulasi, teknologi, dan literasi. Ia menempatkan privasi sebagai HAM, bukan sekadar kepatuhan aturan — sesuai kata kunci “fundamental dan etis”."},
+
+{q:"Bacalah teks berikut!\n\nGlobalisasi membuat rantai pasok terfragmentasi lintas negara demi efisiensi biaya. Namun kerentanannya terungkap saat pandemi, bencana, dan konflik geopolitik: ketergantungan pada satu/beberapa negara pemasok memicu kelangkaan, kenaikan harga, dan gangguan produksi. Kurangnya transparansi menyulitkan pelacakan asal produk, kondisi kerja, dan dampak lingkungan. Reshoring/nearshoring menjadi tren untuk memperkuat ketahanan. Di masa depan, diversifikasi pemasok, digitalisasi rantai pasok, dan fokus pada keberlanjutan akan menjadi kunci membangun rantai pasok global yang resilient, transparan, dan bertanggung jawab.\n\nStrategi paling adaptif dan berorientasi masa depan bagi perusahaan adalah...",
+o:["Memperkuat hubungan jangka panjang dengan pemasok tunggal berharga terendah.","Meningkatkan investasi logistik global yang lebih canggih.","Menerapkan reshoring/nearshoring untuk memindahkan seluruh produksi ke negara asal.","Mengandalkan perjanjian perdagangan bebas untuk akses pasar global.","Melakukan diversifikasi pemasok, digitalisasi rantai pasok, dan fokus pada keberlanjutan dalam operasional."],a:4,
+p:"Kalimat penutup teks menyebut tiga kunci: diversifikasi (menyebar risiko), digitalisasi (visibilitas & efisiensi), keberlanjutan (jangka panjang). Opsi lain parsial atau justru memperbesar ketergantungan."},
+
+{q:"Bacalah teks berikut!\n\nAI dalam pendidikan memungkinkan personalisasi pembelajaran: menganalisis kinerja siswa secara real-time dan menyesuaikan materi, metode, serta kecepatan belajar; juga mengotomatiskan tugas administratif guru. Namun muncul kekhawatiran etika serius, terutama bias algoritmik. Algoritma dilatih dengan data historis; bila data mencerminkan ketidaksetaraan sistem pendidikan, AI dapat memperkuat dan melanggengkan bias tersebut. Akibatnya diskriminatif: siswa dari kelompok minoritas atau sosio-ekonomi rendah bisa memperoleh rekomendasi belajar kurang optimal atau terjebak jalur belajar kurang menantang, memperburuk kesenjangan. Transparansi dan akuntabilitas algoritma menjadi krusial.\n\nTantangan etika paling signifikan dalam penerapan AI untuk personalisasi pembelajaran adalah...",
+o:["Risiko bias algoritmik yang dapat memperkuat ketidaksetaraan dan diskriminasi dalam sistem pendidikan.","Potensi AI meningkatkan efektivitas pembelajaran.","Kemampuan AI mengotomatiskan tugas administratif guru.","Perlunya investasi besar infrastruktur dan pelatihan guru.","Kekhawatiran privasi data siswa dalam sistem berbasis AI."],a:0,
+p:"Fokus utama teks adalah bias algoritmik yang melanggengkan diskriminasi dan kesenjangan — inilah isu etika paling mendasar karena mengancam keadilan dan kesetaraan pendidikan."}
+];
+
+const TIU=[
+{q:"SAJAK : PUISI = ADEGAN : ....",o:["FILM","SUTRADARA","KAMERA","AKTOR","SKENARIO"],a:0,p:"Hubungan bagian–keseluruhan. Sajak adalah bagian/bentuk pembentuk puisi; adegan adalah bagian pembentuk film."},
+{q:"MOBIL : BENSIN = TUBUH : ....",o:["MAKANAN","OTOT","DARAH","JANTUNG","PARU-PARU"],a:0,p:"Hubungan benda–sumber energi. Mobil bergerak dengan bensin, tubuh berenergi dari makanan."},
+{q:"ARSITEK : BANGUNAN = KOMPOSER : ....",o:["MUSIK","PIANO","KONSER","ORCHESTRA","NADA"],a:0,p:"Hubungan profesi–hasil karya. Arsitek menghasilkan bangunan, komposer menghasilkan musik."},
+{q:"Semua mamalia bernapas dengan paru-paru.\nSemua paus adalah mamalia.\n\nKesimpulan yang paling tepat adalah...",
+o:["Semua hewan bernapas dengan paru-paru adalah mamalia.","Semua paus bernapas dengan paru-paru.","Beberapa paus tidak bernapas dengan paru-paru.","Beberapa mamalia adalah paus.","Paus adalah satu-satunya mamalia yang bernapas dengan paru-paru."],a:1,p:"Silogisme kategorial (Barbara): Semua M=P; Semua S=M ⇒ Semua S=P. Jadi semua paus bernapas dengan paru-paru."},
+{q:"Budi pergi ke sekolah atau ke pasar.\nBudi tidak pergi ke sekolah.\n\nKesimpulan yang paling tepat adalah...",
+o:["Budi mungkin pergi ke pasar.","Budi tidak pergi ke pasar.","Budi pergi ke kedua tempat.","Budi pasti pergi ke pasar.","Budi tidak pergi ke mana-mana."],a:3,p:"Silogisme disjungtif: P ∨ Q; ~P ⇒ Q. Budi pasti pergi ke pasar."},
+{q:"Tidak ada koruptor yang jujur.\nBeberapa politikus itu jujur.\n\nKesimpulan yang paling tepat adalah...",
+o:["Beberapa politikus itu koruptor.","Semua politikus itu koruptor.","Tidak ada politikus yang koruptor.","Kejujuran tidak relevan dalam politik.","Beberapa politikus itu bukan koruptor."],a:4,p:"Politikus yang jujur pasti bukan koruptor (karena tak ada koruptor jujur). Kesimpulan particular negative: beberapa politikus bukan koruptor."},
+{q:"Empat siswa memberikan pernyataan:\n• W: “X berbohong.”\n• X: “Y jujur.”\n• Y: “Z berbohong.”\n• Z: “Saya jujur.”\n\nJika hanya satu yang jujur, siapakah dia?",
+o:["W","X","Y","Z","Tidak mungkin hanya satu yang jujur"],a:4,p:"Uji semua kasus: bila W jujur ⇒ X bohong ⇒ Y bohong ⇒ Z jujur (2 orang jujur, kontradiksi). Bila X jujur ⇒ Y jujur (2 orang). Bila Y jujur ⇒ X harus bohong, padahal X menyatakan Y jujur (kontradiksi). Bila Z jujur ⇒ Y bohong, tetapi Ybohong berarti Z jujur — namun W/X ikut konsisten menjadi bohong hanya jika Y bohong dan X bohong menuntut Y bohong (konsisten), sementara W menyatakan X bohong menjadi benar ⇒ W jujur (2 orang). Tidak ada skenario tepat satu orang jujur."},
+{q:"Tiga acara (X, Y, Z) digelar pada hari berbeda: Senin, Rabu, Jumat.\n• Jika X hari Senin, Z tidak Jumat.\n• Y sebelum X atau sesudah Z.\n• Z tidak hari Rabu.\n\nJika X hari Jumat, urutan jadwal yang mungkin adalah...",
+o:["X(Jumat), Y(Senin), Z(Rabu)","Y(Senin), Z(Rabu), X(Jumat)","Y(Rabu), Z(Senin), X(Jumat)","Z(Senin), Y(Rabu), X(Jumat)","X(Jumat), Z(Senin), Y(Rabu)"],a:3,p:"X Jumat; Z ≠ Rabu ⇒ Z Senin; maka Y Rabu. Urutan: Z(Senin) → Y(Rabu) → X(Jumat). Opsi E salah urutan penulisan jadwal (Y sebelum Z tidak sesuai susunan hari)."},
+{q:"Lima siswa (A, B, C, D, E) memiliki nilai berbeda.\n• B > A dan B < C\n• D < E\n• E bukan nilai tertinggi/terendah\n\nJika tertinggi adalah C, urutan nilai dari terendah ke tertinggi adalah...",
+o:["D, A, E, B, C","A, D, E, B, C","D, E, A, B, C","A, D, B, E, C","D, A, B, E, C"],a:4,p:"C tertinggi, C>B>A, E>D, dan E harus di posisi tengah. Susunan yang memenuhi seluruh syarat: D < A < B < E < C."},
+{q:"Enam orang (P, Q, R, S, T, U) duduk melingkar.\n• P tidak bersebelahan dengan Q atau R\n• S di antara T dan U\n\nJika T di kanan S, posisi pasti U adalah...",
+o:["Kiri S","Kanan T","Bersebelahan P","Berseberangan Q","Dua kursi dari R"],a:0,p:"S diapit T dan U. Karena T di kanan S, maka U pasti di kiri S (susunan U–S–T)."},
+{q:"Sisa pembagian 3²¹ oleh 10 adalah....",o:["1","3","5","7","9"],a:1,p:"Pola satuan 3ⁿ: 3, 9, 7, 1 (siklus 4). 21 mod 4 = 1 ⇒ satuan 3. Sisa dibagi 10 = 3."},
+{q:"Nilai dari [(3/8 × 40%) : 2/3] × 0,75 adalah....",o:["0,02250","0,15000","0,16875","0,33750","0,67500"],a:2,p:"3/8 × 2/5 = 3/20. Dibagi 2/3 ⇒ 3/20 × 3/2 = 9/40 = 0,225. Lalu 0,225 × 0,75 = 0,16875."},
+{q:"1/(1×2) + 1/(2×3) + 1/(3×4) + 1/(4×5) = ....",o:["0,67","0,70","0,75","0,77","0,80"],a:4,p:"Telescoping: (1−1/2)+(1/2−1/3)+(1/3−1/4)+(1/4−1/5) = 1 − 1/5 = 0,8."},
+{q:"(0,4% × 0,5%) / (0,1% × 0,2% × 0,3%) = ....",o:["3,333333","33,33333","333,3333","3333,333","3333,33"],a:3,p:"= (4×10⁻³ × 5×10⁻³)/(10⁻³ × 2×10⁻³ × 3×10⁻³) = (2×10⁻⁵)/(6×10⁻⁹) = (1/3)×10⁴ ≈ 3.333,333."},
+{q:"Jika 1/a − 1/b = 7 dan 1/a + 1/b = 3, maka nilai 1/a² − 1/b² adalah....",o:["4","7","10","16","21"],a:4,p:"Selisih kuadrat: (1/a − 1/b)(1/a + 1/b) = 7 × 3 = 21."},
+{q:"3, 7, 17, 38, 83, ....",o:["181","179","177","173","170"],a:2,p:"Pola: suku berikutnya = 2×suku sebelumnya + bilangan Fibonacci (1, 3, 4, 7, 11).\n7=2(3)+1; 17=2(7)+3; 38=2(17)+4; 83=2(38)+7; berikutnya = 2(83)+11 = 177."},
+{q:"1/9, 3, 1/3, 24, 1, 96, 3, 192, 9, ....",o:["384","324","272","216","192"],a:4,p:"Dua larik berselang. Larik ganjil: 1/9, 1/3, 1, 3, 9 (×3). Larik genap: 3, 24, 96, 192, … dengan pengali ×8, ×4, ×2, ×1 ⇒ 192 × 1 = 192."},
+{q:"41, 37, 35, 35, 31, 29, 29, ....",o:["33","31","29","27","25"],a:4,p:"Selisih berulang −4, −2, 0: 41−4=37; 37−2=35; 35−0=35; 35−4=31; 31−2=29; 29−0=29; 29−4=25."},
+{q:"A, F, G, L, M, R, S, ....",o:["Z","Y","X","U","T"],a:2,p:"Dua larik +6: A, G, M, S dan F, L, R, X. Suku berikutnya X."},
+{q:"5, 7, 15, 19, 33, 39, ...., ....",o:["59 dan 67","59 dan 65","57 dan 65","55 dan 65","55 dan 63"],a:0,p:"Larik 1: 5, 15, 33, … selisih 10, 18, 26 ⇒ 59. Larik 2: 7, 19, 39, … selisih 12, 20, 28 ⇒ 67."},
+{q:"Jika x = 6y, y = 7/6, dan z = 7, maka pernyataan yang benar adalah....",o:["x = z","z = x − y","y² = x + z","2y = x − z","x/y = y/z"],a:0,p:"x = 6 × 7/6 = 7 dan z = 7 ⇒ x = z."},
+{q:"Jika y = 1/66 − 1/67 dan x = 1/65 − 1/68, maka....",o:["y > x","y < x","y = x","y ≥ x","y ≤ x"],a:1,p:"y = 1/(66×67) = 1/4422 ≈ 0,000226. x = 3/(65×68) = 3/4420 ≈ 0,000679. Jadi y < x."},
+{q:"Jika x·y = 1/y² dan y merupakan bilangan negatif, maka....",o:["x ≥ 0","x < 0","x = y","2x < 3y","Hubungan x dan y tidak dapat ditentukan"],a:1,p:"x = 1/y³. Karena y negatif, y³ negatif ⇒ x negatif (x < 0)."},
+{q:"Jika x² − 43 = 200 dan y + 6x = 20, maka pernyataan yang benar adalah....",o:["x > y untuk semua nilai x","x > y jika x bilangan positif","x < y jika x bilangan positif","3x > 2y untuk semua nilai x","x dan y tidak dapat ditentukan"],a:1,p:"x² = 243 ⇒ x = ±9√3 ≈ ±15,59; y = 20 − 6x. Untuk x positif: y ≈ −73,5 ⇒ x > y. Untuk x negatif: y ≈ 113,5 ⇒ x < y. Jadi benar hanya bila x positif."},
+{q:"Jika x = 2 : 4/5 dan y = (2/5)⁻¹, maka....",o:["x < y","x > y","x = y","2x < 3y","Hubungan x dan y tidak dapat ditentukan"],a:2,p:"x = 2 × 5/4 = 5/2; y = 5/2. Jadi x = y."},
+{q:"Jarak permukaan air Sungai Cilimung ke bibir sungai 95 cm. Untuk mengatasi banjir, dasar sungai dikeruk dengan target 5 cm tiap 15 menit. Setiap sekali pengerukan pekerja istirahat 5 menit, dan setiap tiga kali pengerukan mesin diistirahatkan 10 menit. Bersamaan itu hujan deras selama 2 jam menaikkan permukaan air 1 cm per menit.\n\nApa yang akan terjadi di daerah sekitar Sungai Cilimung?",
+o:["Terjadi banjir 105 menit sejak hujan turun","Terjadi banjir 100 menit sejak hujan turun","Terjadi banjir setinggi 10 cm","Terjadi banjir setinggi 5 cm","Tidak terjadi banjir"],a:4,p:"Simulasi jarak air–bibir (hujan −1 cm/menit, pengerukan +5 cm/15 menit):\nmenit 15: 95−15+5 = 85\nmenit 35: 70 | menit 55: 55 | menit 80: 35 | menit 100: 20 | menit 120: 5\nHujan berhenti pada menit ke-120 dengan sisa jarak 5 cm ⇒ air tidak melampaui bibir sungai, tidak terjadi banjir."},
+{q:"Sebuah buku didiskon dua kali berturut-turut, yaitu 20% dan x%. Jika diskon total menjadi 36%, maka x adalah....",o:["20","17","15","12","10"],a:0,p:"Harga akhir = 100 × 0,8 × (1 − x/100) = 64 ⇒ (1 − x/100) = 0,8 ⇒ x = 20."},
+{q:"Selisih antara bilangan terbesar dan terkecil dari bilangan 3 digit yang habis dibagi 7 adalah....",o:["890","889","888","887","886"],a:1,p:"Terbesar 994 (7×142), terkecil 105 (7×15). Selisih = 994 − 105 = 889."},
+{q:"Jumlah n bilangan positif genap yang pertama adalah 272. Dari bilangan-bilangan genap tersebut, jumlah lima bilangan terakhirnya adalah....",o:["150","140","130","120","110"],a:1,p:"Sn = n(n+1) = 272 ⇒ n = 16 (16×17). Jumlah 11 suku pertama = 11×12 = 132. Lima suku terakhir = 272 − 132 = 140 (24+26+28+30+32)."},
+{q:"Pedagang jamu memiliki lemari yang hanya muat 40 boks. Dengan modal Rp300.000 ia membeli jamu A (Rp6.000/boks) dan jamu B (Rp8.000/boks). Harga jual A Rp6.500 dan B Rp8.800 per boks.\n\nKeuntungan maksimum yang diperoleh adalah...",
+o:["Rp29.600","Rp29.000","Rp26.000","Rp23.000","Rp30.000"],a:4,p:"Model: x + y ≤ 40; 6.000x + 8.000y ≤ 300.000; fungsi tujuan Z = 500x + 800y.\nTitik uji: (40,0) = 20.000; (10,30) = 29.000; (0; 37,5) = 30.000.\nNilai optimum fungsi tujuan = Rp30.000 (sesuai kunci soal)."},
+/* ---- 5 soal pengganti figural ---- */
+{q:"2, 6, 12, 20, 30, ....",o:["36","40","42","44","48"],a:2,p:"Pola n(n+1): 1×2, 2×3, 3×4, 4×5, 5×6, 6×7 = 42. (Selisih: 4, 6, 8, 10, 12.)"},
+{q:"Rata-rata nilai 10 siswa adalah 7,5. Setelah nilai 2 siswa baru digabungkan, rata-rata 12 siswa menjadi 7,8. Rata-rata nilai kedua siswa baru tersebut adalah....",o:["8,5","9,0","9,3","9,6","10,0"],a:2,p:"Total 12 siswa = 12 × 7,8 = 93,6. Total 10 siswa = 75. Jumlah 2 siswa baru = 18,6 ⇒ rata-rata = 9,3."},
+{q:"A dapat menyelesaikan pekerjaan dalam 12 hari, B dalam 24 hari. Jika mereka bekerja bersama-sama, pekerjaan selesai dalam....",o:["6 hari","8 hari","9 hari","10 hari","12 hari"],a:1,p:"Kecepatan gabungan = 1/12 + 1/24 = 3/24 = 1/8 ⇒ selesai 8 hari."},
+{q:"DOKTER : RESEP = HAKIM : ....",o:["PENGADILAN","PUTUSAN","HUKUM","PENGACARA","TERDAKWA"],a:1,p:"Hubungan profesi–produk yang dihasilkan. Dokter menghasilkan resep, hakim menghasilkan putusan."},
+{q:"Dari 5 orang anggota akan dipilih seorang ketua dan seorang sekretaris. Banyak susunan pengurus yang mungkin adalah....",o:["10","15","20","25","30"],a:2,p:"Permutasi 2 dari 5: 5 × 4 = 20 (jabatan berbeda, urutan diperhitungkan)."}
+];
+
+const TKP=[
+{q:"Anda petugas layanan pelanggan perusahaan air minum daerah. Seorang pelanggan melapor air di rumahnya keruh dan berbau. Bagaimana Anda merespons keluhan tersebut?",
+o:["Mencatat laporan dan berjanji menyampaikan ke bagian teknis.","Mencatat laporan, memberi nomor laporan, dan menginformasikan perkiraan waktu penanganan.","Mencatat laporan, memberi nomor laporan, menginformasikan waktu penanganan, memberi tips sementara, dan menawarkan kompensasi bila masalah tidak segera teratasi.","Mengatakan mungkin pipa di rumah pelanggan yang bermasalah, bukan dari perusahaan.","Mencatat laporan, memberi nomor laporan, menginformasikan waktu penanganan, dan memberi tips sementara."],
+s:[2,3,5,1,4],p:"Pelayanan prima: responsif, informatif, solutif, disertai jaminan tindak lanjut (kompensasi) sebagai bentuk tanggung jawab penuh."},
+
+{q:"Anda petugas pusat layanan informasi publik. Seorang jurnalis bersurat tugas resmi meminta data anggaran penanganan pandemi di daerah Anda. Bagaimana Anda menanggapi permintaan tersebut?",
+o:["Meminta permintaan tertulis, menjelaskan prosedur, dan memberi perkiraan waktu penyediaan data.","Meminta permintaan tertulis, menjelaskan prosedur, memberi perkiraan waktu, dan menginformasikan data yang tersedia publik.","Meminta permintaan tertulis dan menunggu persetujuan atasan.","Meminta permintaan tertulis, menjelaskan prosedur, memberi perkiraan waktu, memberi informasi publik, serta membantu menemukan data relevan.","Menolak permintaan karena data bersifat rahasia."],
+s:[3,4,2,5,1],p:"Keterbukaan informasi publik: transparan sekaligus proaktif membantu pemohon memperoleh data yang benar."},
+
+{q:"Anda bekerja di bagian perizinan. Seorang pengusaha mengajukan izin dengan dokumen lengkap, tetapi ada satu persyaratan yang tidak sesuai peraturan terbaru. Bagaimana Anda menangani situasi ini?",
+o:["Menjelaskan persyaratan, memberi informasi cara memenuhi, dan menawarkan bantuan.","Menjelaskan persyaratan, membantu, memberi alternatif solusi, dan memberi prioritas pelayanan setelah lengkap.","Menolak pengajuan karena tidak sesuai peraturan.","Menjelaskan persyaratan yang tidak sesuai dan meminta dilengkapi.","Menjelaskan persyaratan, membantu, memberi alternatif solusi, memberi prioritas, dan memberikan nomor kontak konsultasi lanjutan."],
+s:[3,4,1,2,5],p:"Tetap taat aturan, namun proaktif memberi solusi dan pendampingan hingga tuntas (pelayanan prima)."},
+
+{q:"Anda petugas pengaduan konsumen. Seorang konsumen melaporkan pembelian produk palsu dari pedagang online dan membawa bukti pembelian serta komunikasi. Bagaimana Anda merespons?",
+o:["Mencatat laporan dan menyarankan melapor ke polisi.","Mencatat laporan, membantu, memberi informasi, dan melakukan mediasi antara konsumen dan pedagang bila memungkinkan.","Mencatat laporan, memberi informasi hak konsumen, dan menjelaskan prosedur pengaduan.","Mencatat laporan, memberi informasi, menjelaskan prosedur, dan membantu menyusun surat pengaduan.","Menyatakan pembelian online berisiko sendiri dan tidak dapat dibantu."],
+s:[2,5,3,4,1],p:"Respons paling lengkap: pencatatan, edukasi hak, fasilitasi, hingga upaya penyelesaian (mediasi)."},
+
+{q:"Anda petugas pelayanan publik pemda. Seorang warga penyandang disabilitas kesulitan berkomunikasi saat meminta informasi program bantuan sosial. Bagaimana Anda membantu?",
+o:["Berbicara perlahan dengan bahasa sederhana.","Menggunakan bahasa isyarat, memberi informasi, memberi formulir, dan menawarkan bantuan pengisian bila diperlukan.","Meminta warga datang bersama pendamping.","Menggunakan bahasa isyarat bila mampu, atau mencari rekan kerja yang bisa berbahasa isyarat.","Menggunakan bahasa isyarat, memberi informasi program, dan memberi formulir dalam format mudah dibaca."],
+s:[2,5,1,3,4],p:"Pelayanan inklusif: menyediakan akses komunikasi sekaligus membantu proses administrasi sampai selesai."},
+
+{q:"Anda guru SMK. Seorang siswa mengeluh kesulitan mengikuti pelajaran praktik dan merasa tidak berbakat di bidang tersebut. Bagaimana Anda merespons?",
+o:["Mengatakan tidak semua orang berbakat di semua bidang dan siswa harus menerima kenyataan.","Mendengarkan keluhan, memotivasi, membimbing, dan memberi informasi program pengembangan bakat sekolah.","Mencatat keluhan dan berjanji memberi perhatian lebih di kelas.","Mendengarkan dengan empati, memotivasi, dan memberi bimbingan tambahan bila perlu.","Mendengarkan, memotivasi, membimbing, memberi informasi, serta membantu siswa menemukan bidang sesuai minat dan bakatnya."],
+s:[1,4,2,3,5],p:"Pendekatan suportif dan komprehensif: empati, motivasi, bimbingan, hingga penelusuran minat-bakat."},
+
+{q:"Anda petugas informasi rumah sakit. Keluarga pasien tampak cemas meminta informasi kondisi pasien di ruang ICU. Bagaimana Anda merespons?",
+o:["Memberi informasi, menjelaskan istilah medis, memberi jadwal kunjungan, memberi dukungan psikologis, dan membantu berkomunikasi dengan dokter penanggung jawab.","Mengatakan informasi hanya untuk keluarga inti.","Memberi informasi kondisi pasien sesuai catatan medis yang tersedia.","Memberi informasi, menjelaskan istilah medis, dan memberi jadwal kunjungan ICU.","Memberi informasi, menjelaskan istilah medis, memberi jadwal kunjungan, dan info dukungan psikologis yang tersedia."],
+s:[5,1,2,3,4],p:"Empati + informasi akurat + fasilitasi komunikasi dengan dokter adalah pelayanan paling humanis dan lengkap."},
+
+{q:"Anda petugas informasi museum. Pengunjung mencari artefak tertentu yang ternyata sedang dikonservasi sehingga tidak dapat dilihat. Bagaimana Anda menangani situasi ini?",
+o:["Mengatakan artefak tidak tersedia dan meminta melihat artefak lain.","Menjelaskan proses konservasi dan memberi informasi artefak lain bertema serupa.","Menjelaskan proses konservasi, memberi informasi artefak serupa, dan memperkirakan kapan artefak tersedia kembali.","Mengatakan informasi artefak yang dikonservasi bersifat rahasia.","Menjelaskan artefak sedang dikonservasi dan akan tersedia di masa mendatang."],
+s:[2,4,5,1,3],p:"Informatif dan solutif: alasan jelas, alternatif setara, serta kepastian waktu ketersediaan."},
+
+{q:"Anda ASN yang memimpin tim dengan latar belakang dan tingkat pengalaman beragam. Bagaimana Anda menciptakan lingkungan kerja yang inklusif dan kolaboratif?",
+o:["Menetapkan aturan dan prosedur ketat agar semua bekerja sesuai standar.","Memperlakukan semua anggota sama tanpa memperhatikan perbedaan latar belakang.","Memfasilitasi sesi berbagi pengalaman dan pengetahuan antaranggota tim.","Membentuk kelompok kecil berdasarkan tingkat pengalaman agar efisien.","Membiarkan anggota bekerja mandiri dan hanya memberi arahan bila perlu."],
+s:[2,3,5,4,1],p:"Berbagi pengetahuan menghargai perbedaan sekaligus membangun kolaborasi dan pembelajaran tim."},
+
+{q:"Anda ASN yang ditugaskan membangun jejaring kerja internasional, namun kemampuan bahasa asing Anda terbatas. Bagaimana mengatasi hambatan ini?",
+o:["Menggunakan jasa penerjemah saat berinteraksi.","Memfokuskan diri pada pemangku kepentingan berbahasa Indonesia atau Inggris.","Mengikuti kursus bahasa asing intensif untuk meningkatkan kemampuan komunikasi.","Menggunakan aplikasi penerjemah daring saat berkomunikasi.","Menghindari interaksi dengan pihak yang tidak berbahasa Indonesia."],
+s:[4,3,5,2,1],p:"Pengembangan kompetensi diri adalah solusi jangka panjang paling berkelanjutan."},
+
+{q:"Anda ASN koordinator program pemberdayaan masyarakat di daerah terpencil. Partisipasi masyarakat masih rendah. Bagaimana meningkatkannya?",
+o:["Sosialisasi besar-besaran dengan bahasa formal.","Meminta tokoh masyarakat mengajak warga berpartisipasi.","Mengadakan diskusi kelompok terfokus dengan perwakilan berbagai kelompok masyarakat untuk memahami kebutuhan dan aspirasi mereka.","Memberikan insentif bagi masyarakat yang berpartisipasi.","Membiarkan masyarakat berpartisipasi sukarela tanpa intervensi."],
+s:[2,3,5,4,1],p:"Partisipatif: memahami kebutuhan/aspirasi dulu agar program relevan dan menumbuhkan rasa memiliki."},
+
+{q:"Anda ASN yang mengembangkan inovasi pelayanan publik berbasis AI, namun muncul kekhawatiran keamanan data dan privasi masyarakat. Bagaimana mengatasinya?",
+o:["Mengabaikan kekhawatiran dan tetap melanjutkan inovasi.","Menyosialisasikan manfaat AI tanpa membahas risikonya.","Melakukan kajian risiko dan menyusun langkah mitigasi atas kekhawatiran keamanan data dan privasi.","Menggunakan AI hanya untuk tugas tanpa data sensitif.","Meminta ahli keamanan siber menjamin keamanan sebelum melanjutkan."],
+s:[1,2,5,3,4],p:"Manajemen risiko: identifikasi–mitigasi memungkinkan inovasi tetap berjalan secara bertanggung jawab."},
+
+{q:"Anda ASN yang ditugaskan membangun jejaring kerja dengan media massa. Bagaimana membangun hubungan yang baik dengan media?",
+o:["Memberi informasi hanya kepada media yang berhubungan baik dengan instansi.","Membangun komunikasi terbuka dan transparan serta memberi informasi akurat dan tepat waktu.","Mengadakan konferensi pers rutin.","Menyebarkan informasi lewat media sosial tanpa melibatkan media massa.","Membatasi akses media untuk menghindari pemberitaan negatif."],
+s:[2,5,3,4,1],p:"Kemitraan media dibangun atas transparansi, akurasi, dan ketepatan waktu — bukan selektivitas atau pembatasan."},
+
+{q:"Anda ASN yang memfasilitasi kerja sama antardaerah dalam pengelolaan SDA. Antardaerah memiliki kepentingan dan prioritas berbeda. Bagaimana mengatasi perbedaan tersebut?",
+o:["Membangun kesepahaman melalui dialog konstruktif dan fokus pada kepentingan bersama.","Membiarkan tiap daerah mengelola sesuai kepentingannya.","Mengadakan pertemuan rutin antardaerah.","Membentuk tim ahli independen untuk memberi rekomendasi.","Menggunakan pendekatan top-down dengan kebijakan seragam."],
+s:[5,1,2,4,3],p:"Dialog yang mencari titik temu kepentingan bersama adalah inti kolaborasi antar daerah."},
+
+{q:"Anda ASN aktif dalam jejaring kerja internasional. Bagaimana memanfaatkan jejaring itu untuk pengembangan karier Anda?",
+o:["Hanya berinteraksi dengan anggota berposisi lebih tinggi.","Mengikuti kegiatan secara pasif.","Memanfaatkan jejaring untuk mencari peluang kerja di luar negeri.","Menggunakan jejaring hanya untuk mempromosikan diri.","Membangun hubungan baik, berbagi pengetahuan dan pengalaman, serta mencari peluang kolaborasi."],
+s:[2,3,4,1,5],p:"Jejaring profesional dibangun atas resiprositas: berbagi, berkolaborasi, dan memberi nilai bagi jaringan."},
+
+{q:"Anda ASN yang membangun jejaring kerja dengan komunitas disabilitas yang kebutuhan dan aspirasinya beragam. Bagaimana memastikan jejaring itu inklusif dan responsif?",
+o:["Mengadakan pertemuan rutin dengan perwakilan berbagai kelompok disabilitas untuk mendengarkan aspirasi.","Membentuk tim kerja perwakilan berbagai kelompok disabilitas untuk merancang program inklusif.","Menggunakan bahasa mudah dipahami dan menyediakan aksesibilitas kegiatan.","Mengadakan survei identifikasi kebutuhan dan aspirasi.","Mengundang tokoh disabilitas berbicara dalam acara jejaring."],
+s:[5,4,3,2,1],p:"Melibatkan langsung perwakilan komunitas secara berkelanjutan (“nothing about us without us”) paling menjamin inklusivitas."},
+
+{q:"Di daerah dengan kemiskinan tinggi terdapat praktik eksploitasi anak yang melanggar HAM. Sebagai ASN yang menjunjung nilai kemanusiaan, langkah paling mendesak adalah...",
+o:["Sosialisasi bahaya eksploitasi anak tanpa perlindungan konkret.","Membentuk tim khusus lintas instansi untuk penegakan hukum sekaligus perlindungan anak korban eksploitasi.","Memberi bantuan keuangan kepada keluarga rentan.","Berdialog dengan pelaku untuk mencari solusi saling menguntungkan.","Melaporkan kasus ke pihak berwajib tanpa pendampingan korban."],
+s:[2,5,3,1,4],p:"Kombinasi penindakan dan perlindungan korban secara lintas sektor adalah respons paling mendesak dan menyeluruh."},
+
+{q:"Dalam pembangunan daerah terdapat ketegangan antara pelestarian lingkungan dan pengembangan ekonomi. Sebagai ASN yang bijaksana, pendekatan paling tepat adalah...",
+o:["Memprioritaskan ekonomi tanpa memperhatikan lingkungan.","Memprioritaskan lingkungan tanpa memperhatikan kebutuhan ekonomi.","Menerapkan pembangunan berkelanjutan yang mengintegrasikan aspek ekonomi, sosial, lingkungan, serta melibatkan partisipasi masyarakat.","Mengadakan studi kelayakan dampak lingkungan setiap proyek.","Mengadopsi teknologi ramah lingkungan pada setiap proyek."],
+s:[1,2,5,3,4],p:"Pembangunan berkelanjutan mengintegrasikan tiga pilar dan bersifat partisipatif — paling komprehensif."},
+
+{q:"Di era globalisasi, budaya asing mudah masuk dan memengaruhi gaya hidup generasi muda. Sebagai ASN yang peduli identitas budaya bangsa, strategi paling efektif adalah...",
+o:["Melarang masuknya budaya asing.","Mengadakan festival budaya lokal secara rutin.","Mengintegrasikan nilai budaya lokal ke kurikulum pendidikan dan media massa serta mempromosikan produk budaya lokal di pasar global.","Mengadakan dialog generasi muda dengan tokoh budaya.","Mengadopsi budaya asing yang positif saja."],
+s:[1,3,5,4,2],p:"Strategi sistemik (pendidikan + media + promosi global) memperkuat identitas sekaligus memanfaatkan peluang globalisasi."},
+
+{q:"Di daerah dengan keragaman agama tinggi sering terjadi gesekan akibat perbedaan interpretasi ajaran. Sebagai ASN penjaga kerukunan, tindakan paling tepat adalah...",
+o:["Mengadakan forum dialog antartokoh agama secara rutin untuk membahas perbedaan dan mencari titik temu.","Membentuk tim patroli gabungan lintas kelompok agama.","Mengadakan festival budaya lintas kelompok agama.","Mengimbau masyarakat tidak membahas perbedaan ajaran di tempat umum.","Membiarkan gesekan mereda dengan sendirinya."],
+s:[5,4,3,2,1],p:"Dialog rutin menyentuh akar masalah (perbedaan interpretasi) dan membangun saling pengertian."},
+
+{q:"Banyak generasi muda lebih tertarik budaya populer asing daripada budaya tradisional. Sebagai ASN, strategi paling efektif adalah...",
+o:["Mengadakan festival budaya tradisional.","Mengintegrasikan unsur budaya tradisional ke konten media sosial populer.","Mengadakan kompetisi pembuatan konten digital bertema budaya tradisional.","Melarang akses konten budaya populer asing.","Mengadakan seminar pentingnya melestarikan budaya tradisional."],
+s:[4,3,5,1,2],p:"Kompetensi + partisipasi aktif (kompetisi konten) membuat generasi muda menjadi pelaku pelestarian, bukan sekadar penonton."},
+
+{q:"Di daerah miskin banyak anak putus sekolah dan bekerja di sektor informal. Sebagai ASN yang peduli pendidikan dan kesejahteraan anak, tindakan paling mendesak adalah...",
+o:["Memberi bantuan keuangan agar anak kembali bersekolah.","Membangun sekolah gratis di daerah terpencil.","Mengadakan program pelatihan keterampilan bagi anak putus sekolah agar dapat bekerja layak.","Sosialisasi pentingnya pendidikan.","Membiarkan anak bekerja karena dianggap tradisi keluarga."],
+s:[4,3,5,2,1],p:"Sesuai kunci paket soal: program keterampilan dipandang solusi komprehensif-berkelanjutan. (Dalam praktik, kombinasi bantuan biaya + pengembalian ke sekolah juga sangat dianjurkan.)"},
+
+{q:"Proyek infrastruktur menimbulkan konflik kepemilikan lahan antara pemerintah dan masyarakat adat. Sebagai ASN penyelesaian konflik, pendekatan paling tepat adalah...",
+o:["Mediasi antara pemerintah dan masyarakat adat dengan melibatkan pihak ketiga netral.","Membentuk tim negosiasi perwakilan pemerintah dan masyarakat adat.","Konsultasi publik tentang dampak proyek.","Melanjutkan proyek dengan memberi kompensasi.","Mengabaikan keberatan dan melanjutkan proyek."],
+s:[5,4,3,2,1],p:"Mediasi dengan pihak netral menjamin proses adil, setara, dan berpeluang mencapai kesepakatan damai."},
+
+{q:"Anda ingin meningkatkan kemampuan TIK untuk mendukung pekerjaan. Sumber belajar mana yang paling efektif dan relevan bagi ASN?",
+o:["Mencari tutorial YouTube sesuai minat.","Kursus online gratis keterampilan digital umum.","Pelatihan TIK yang diselenggarakan kantor/lembaga pemerintah yang fokus pada kebutuhan ASN.","Membaca buku TIK dasar untuk pemula.","Bertanya kepada teman yang lebih ahli setiap kali kesulitan."],
+s:[3,4,5,2,1],p:"Kurikulum yang dirancang khusus untuk kebutuhan kerja ASN paling relevan dan terukur dampaknya."},
+
+{q:"Anda diminta membuat presentasi laporan kinerja kantor. Fitur TIK apa yang paling membuat presentasi menarik dan efektif?",
+o:["Template standar dan teks berwarna-warni.","Animasi sederhana agar tidak membosankan.","Grafik, infografis, dan visualisasi data.","Hanya teks dan bullet points agar padat.","Musik latar agar lebih hidup."],
+s:[2,3,5,1,4],p:"Visualisasi data menyederhanakan informasi kompleks sehingga cepat dipahami audiens."},
+
+{q:"Anda perlu mengumpulkan data masyarakat untuk survei kebijakan publik. Metode pengumpulan data online paling efisien menjangkau banyak responden adalah...",
+o:["Mengirim email survei satu per satu.","Membuat formulir survei online dan menyebarkannya melalui media sosial serta website pemerintah.","Survei telepon secara acak.","Menyebar kuesioner cetak dan mengumpulkan manual.","FGD online dengan perwakilan masyarakat."],
+s:[2,5,3,1,4],p:"Formulir daring + distribusi kanal resmi menjangkau luas, cepat, murah, dan datanya terekap otomatis."},
+
+{q:"Anda perlu rapat penting dengan rekan kerja yang sedang dinas luar kota. Platform TIK paling tepat adalah...",
+o:["Telepon konferensi.","Email berisi agenda dan catatan rapat.","Menunda rapat hingga semua kembali ke kantor.","Rapat hybrid sebagian fisik sebagian online.","Video conference yang memungkinkan interaksi tatap muka virtual dan berbagi layar."],
+s:[3,2,1,4,5],p:"Video conference mendukung komunikasi verbal-nonverbal dan berbagi dokumen secara real-time."},
+
+{q:"Anda menemukan berita hoax tentang instansi tempat Anda bekerja beredar di media sosial. Bagaimana sebaiknya bertindak?",
+o:["Mengabaikan karena hoax akan hilang sendiri.","Ikut menyebarkan untuk tujuan tertentu.","Membantah di media sosial pribadi dengan emosi.","Melaporkan kepada tim humas/unit terkait agar ditindaklanjuti dengan klarifikasi resmi.","Mendiskusikan di grup chat kantor saja."],
+s:[2,1,3,5,4],p:"Klarifikasi resmi melalui saluran kelembagaan paling efektif dan menjaga kredibilitas instansi."},
+
+{q:"Anda mencari informasi peraturan terbaru pemerintah terkait bidang pekerjaan. Sumber paling kredibel adalah...",
+o:["Website resmi lembaga pemerintah terkait.","Blog pribadi yang membahas isu pemerintahan.","Artikel media massa umum.","Forum diskusi online kebijakan publik.","Postingan media sosial tokoh masyarakat."],
+s:[5,2,3,1,4],p:"Situs resmi memuat dokumen hukum asli dan terbaru (JDIH/kementerian) sehingga paling akuntabel."},
+
+{q:"Anda membuat laporan keuangan kantor dengan spreadsheet. Fitur apa yang paling penting dikuasai agar efisien dan akurat?",
+o:["Fitur desain tampilan.","Formula dan fungsi untuk perhitungan otomatis serta analisis data.","Import/export data.","Kolaborasi real-time.","Proteksi password."],
+s:[1,5,3,4,2],p:"Formula/fungsi mengotomatiskan perhitungan, meminimalkan kesalahan manual, dan mempercepat analisis."},
+
+{q:"Dalam tim Anda, beberapa anggota senior kurang familiar dengan sistem kerja baru. Tindakan paling profesional adalah...",
+o:["Membiarkan senior beradaptasi sendiri dan fokus membantu junior.","Menawarkan bantuan dan bimbingan sabar secara personal kepada senior serta berbagi tips praktis.","Mengeluh karena senior lambat beradaptasi.","Meminta atasan mengganti senior dengan staf lebih muda.","Menggunakan teknologi baru hanya bila perlu dan tetap manual."],
+s:[2,5,1,3,4],p:"Pendampingan inklusif menjaga kekompakan sekaligus memastikan transformasi digital berjalan."},
+
+{q:"Anda menerima hadiah/gratifikasi dari pihak yang Anda layani, meski tanpa maksud terselubung. Sikap paling profesional adalah...",
+o:["Menerima dengan senang hati sebagai apresiasi.","Menerima tanpa melapor karena nilainya kecil.","Menerima dan melapor kepada atasan sesuai prosedur.","Menolak secara halus dan sopan serta menjelaskan bahwa ASN tidak diperbolehkan menerima gratifikasi.","Menerima lalu memberi balasan setimpal."],
+s:[1,2,4,5,3],p:"Menolak adalah langkah utama pencegahan konflik kepentingan; bila terlanjur diterima, wajib lapor (poin 4)."},
+
+{q:"Anda melakukan kesalahan pekerjaan yang berpotensi menimbulkan kerugian kecil dan baru disadari belakangan. Tindakan paling profesional adalah...",
+o:["Menyembunyikan kesalahan agar tidak ditegur.","Bercerita ke rekan terdekat untuk mencari simpati.","Mengakui kesalahan kepada atasan secara jujur dan terbuka serta bertanggung jawab mencari solusi dan mencegahnya terulang.","Mencari pembenaran agar tidak sepenuhnya disalahkan.","Menyalahkan sistem atau faktor eksternal."],
+s:[1,2,5,3,4],p:"Akuntabilitas dan perbaikan berkelanjutan adalah ciri profesionalisme sejati."},
+
+{q:"Anda melihat potensi inovasi perbaikan sistem kerja, tetapi ide Anda berbeda dengan kebiasaan lama. Langkah paling profesional adalah...",
+o:["Menerapkan diam-diam agar tidak ditolak.","Mengurungkan niat karena khawatir resistensi.","Berdiskusi dengan rekan terdekat untuk menggalang dukungan sebelum diajukan.","Mempresentasikan ide kepada atasan dengan data dan argumentasi kuat serta menjelaskan manfaatnya.","Mengajukan tertulis namun tidak memperjuangkan bila ditolak."],
+s:[2,1,3,5,4],p:"Inovasi perlu legitimasi: data, argumentasi, dan komunikasi persuasif kepada pengambil keputusan."},
+
+{q:"Instansi Anda menerima kritik negatif pelayanan secara terbuka di media sosial. Respons paling profesional adalah...",
+o:["Menghapus atau menyensor kritik.","Mengabaikan karena dianggap opini tak berdasar.","Merespons defensif atau menyalahkan pengkritik.","Merespons sopan dan terbuka, mengakui kekurangan, serta berjanji menindaklanjuti dan memperbaiki.","Meminta klarifikasi lalu berdiskusi tertutup dengan pengkritik."],
+s:[1,2,3,5,4],p:"Keterbukaan terhadap kritik menunjukkan orientasi pelayanan dan akuntabilitas publik."},
+
+{q:"Dalam tim beragam budaya, muncul kesalahpahaman komunikasi. Cara paling profesional mengatasinya adalah...",
+o:["Memaksakan gaya komunikasi dominan agar seragam.","Mengabaikan perbedaan budaya.","Mempelajari dan memahami perbedaan budaya anggota serta mengembangkan komunikasi yang sensitif budaya dan saling menghargai.","Membentuk kelompok kecil berdasarkan kesamaan budaya.","Menggunakan istilah ambigu/netral agar tidak salah paham."],
+s:[1,2,5,3,4],p:"Kompetensi lintas budaya mencegah salah paham dan memperkuat kolaborasi tim."},
+
+{q:"Ada informasi penting pekerjaan yang belum tersampaikan kepada rekan kerja yang membutuhkannya. Tindakan paling profesional adalah...",
+o:["Menyimpannya untuk keuntungan pribadi.","Menyebarkan ke semua grup tanpa memilah kebutuhan.","Menunggu rekan bertanya sendiri.","Menyampaikan hanya kepada rekan terdekat.","Menyampaikan langsung dan jelas kepada rekan bersangkutan serta memastikan informasi dipahami."],
+s:[1,3,4,2,5],p:"Komunikasi tepat sasaran + konfirmasi pemahaman memastikan koordinasi berjalan efektif."},
+
+{q:"Teman sesama ASN sering menggunakan istilah provokatif yang memicu perpecahan. Bagaimana Anda merespons?",
+o:["Menanggapi dengan candaan agar suasana cair.","Mengingatkan secara halus bahwa istilah itu kurang pantas.","Mengikuti alur pembicaraan agar dianggap sopan.","Secara tegas menyatakan tidak setuju dan menjelaskan dampaknya.","Mengalihkan topik ke hal yang lebih positif."],
+s:[2,3,1,5,4],p:"Sikap tegas disertai penjelasan dampak menunjukkan komitmen menjaga persatuan sekaligus mengedukasi."},
+
+{q:"Sekelompok remaja menunjukkan sikap eksklusif dan intoleran terhadap kelompok lain. Apa yang sebaiknya Anda lakukan?",
+o:["Menjauhi agar tidak terlibat masalah.","Mendekati dan berdialog untuk memahami motivasi mereka.","Mengajak tokoh agama dan tokoh masyarakat memberikan pembinaan moderasi beragama.","Membiarkan karena itu ekspresi keagamaan mereka.","Melaporkan kepada pihak berwenang bila ada indikasi penyebaran paham radikal."],
+s:[2,3,4,1,5],p:"Bila terdapat indikasi penyebaran paham radikal, pelaporan kepada pihak berwenang adalah tindakan paling bertanggung jawab; pendekatan pembinaan tetap penting sebagai pencegahan."},
+
+{q:"Anda menemukan situs/akun media sosial yang aktif menyebarkan propaganda radikalisme dan terorisme. Tindakan paling bertanggung jawab adalah...",
+o:["Menutup paksa situs/akun tersebut jika memungkinkan.","Mengabaikan agar tidak terpapar.","Membagikan ke teman dan keluarga sebagai peringatan.","Melaporkan kepada pihak berwenang atau platform media sosial untuk ditindaklanjuti.","Berkomentar menentang konten tersebut."],
+s:[2,1,3,5,4],p:"Pelaporan memungkinkan penanganan sistematis oleh pihak berwenang (patroli siber) tanpa risiko penyebaran ulang."},
+
+{q:"Dalam forum diskusi online, seseorang mengajak melakukan tindakan kekerasan atas nama agama. Respons paling tepat adalah...",
+o:["Membalas dengan argumen menentang kekerasan.","Mengabaikan dan keluar dari forum.","Melaporkan ajakan tersebut kepada administrator forum atau pihak berwenang.","Menyimpan bukti untuk dokumentasi pribadi.","Menegur pribadi melalui pesan privat."],
+s:[4,2,5,3,1],p:"Ajakan kekerasan adalah tindak pidana dan berpotensi segera terealisasi — wajib dilaporkan."},
+
+{q:"Anda mendengar kabar rencana pelatihan/perekrutan kelompok radikal di sekitar tempat tinggal. Apa yang sebaiknya dilakukan?",
+o:["Tidak mempedulikan karena mungkin isu.","Mencari tahu kebenaran dari berbagai sumber.","Menghindari lokasi yang diduga.","Mengajak warga meningkatkan kewaspadaan lingkungan.","Melaporkan kepada pihak berwenang untuk penyelidikan dan pencegahan."],
+s:[1,3,2,4,5],p:"Potensi ancaman keamanan harus segera ditindaklanjuti aparat; menunda verifikasi sendiri bisa menghilangkan momentum pencegahan."},
+
+{q:"Tokoh masyarakat yang Anda hormati menyampaikan ceramah berisi ujaran kebencian terhadap kelompok agama lain. Bagaimana sikap Anda?",
+o:["Tetap menghormati dan mengabaikan ujaran kebenciannya.","Menjauhi dan tidak lagi mengikuti ceramahnya.","Mencari tahu konteks dan maksud ujaran tersebut.","Menyampaikan keberatan secara pribadi dengan sopan.","Secara terbuka mengkritik ujaran kebencian itu dan mengingatkan pentingnya toleransi."],
+s:[1,2,3,4,5],p:"Ujaran kebencian tokoh berpengaruh berdampak luas; keberanian mengingatkan secara terbuka demi kepentingan bersama bernilai tertinggi (tetap disampaikan secara santun)."},
+
+{q:"Anak/anggota keluarga Anda mulai menunjukkan minat pada konten online bernuansa radikal. Tindakan paling bertanggung jawab adalah...",
+o:["Mencari tahu konten apa saja yang diminati.","Berdiskusi terbuka tentang bahaya radikalisme dan pentingnya toleransi.","Mengajak mengikuti kegiatan positif penangkal radikalisme.","Membiarkan karena mungkin fase remaja.","Membatasi akses internet tanpa penjelasan."],
+s:[3,5,4,1,2],p:"Dialog terbuka dan edukatif membangun ketahanan pikiran dari dalam keluarga, bukan sekadar pembatasan."},
+
+{q:"Di lingkungan kerja Anda menemukan simbol/atribut yang mengarah pada paham radikalisme atau organisasi terlarang. Apa yang sebaiknya dilakukan?",
+o:["Menghindari area tersebut.","Mencari tahu makna simbol tersebut.","Mengabaikan karena mungkin hiasan biasa.","Menghilangkan simbol secara diam-diam.","Melaporkan temuan kepada atasan atau pihak berwenang di kantor."],
+s:[2,3,1,4,5],p:"Pelaporan melalui jalur resmi memungkinkan penanganan tepat dan mencegah iklim kerja yang tidak kondusif."}
+];
+
+/* ================= ENGINE ================= */
+const PG={TWK:65,TIU:80,TKP:166};
+const DUR=100*60;
+const FLAT=[];
+TWK.forEach(x=>FLAT.push(Object.assign({},x,{sec:"TWK"})));
+TIU.forEach(x=>FLAT.push(Object.assign({},x,{sec:"TIU"})));
+TKP.forEach(x=>FLAT.push(Object.assign({},x,{sec:"TKP"})));
+const N=FLAT.length;
+const L="ABCDE";
+const KEY="skd_sim_v1";
+
+let S=null,tick=null,revFilter="all";
+
+function show(id){document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));document.getElementById(id).classList.add("active");window.scrollTo(0,0);}
+function save(){if(S)localStorage.setItem(KEY,JSON.stringify(S));}
+function load(){try{return JSON.parse(localStorage.getItem(KEY));}catch(e){return null;}}
+
+(function init(){
+  const old=load();
+  if(old&&!old.finished){document.getElementById("btnResume").style.display="inline-block";document.getElementById("nama").value=old.name||"";}
+})();
+
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+function startExam(){
+  const name=(document.getElementById("nama").value||"Peserta").trim();
+  const acak=document.getElementById("acak").checked;
+  const latihan=document.getElementById("latihan").checked;
+  let order=[...Array(N).keys()];
+  if(acak){
+    const t=shuffle(order.filter(i=>FLAT[i].sec==="TWK"));
+    const u=shuffle(order.filter(i=>FLAT[i].sec==="TIU"));
+    const k=shuffle(order.filter(i=>FLAT[i].sec==="TKP"));
+    order=[...t,...u,...k];
+  }
+  S={name,latihan,order,ans:Array(N).fill(null),flag:Array(N).fill(false),pos:0,left:DUR,finished:false,used:0};
+  save();launch();
+}
+function resumeExam(){S=load();if(!S)return;launch();}
+function hardReset(){if(confirm("Hapus seluruh data sesi dan mulai dari awal?")){localStorage.removeItem(KEY);location.reload();}}
+
+function launch(){
+  document.getElementById("whoName").textContent=S.name+" • "+(S.latihan?"Mode Latihan":"Mode Ujian (100 menit)");
+  show("s-exam");render();
+  if(tick)clearInterval(tick);
+  if(!S.latihan){tick=setInterval(()=>{S.left--;S.used++;if(S.left<=0){S.left=0;clearInterval(tick);paintTimer();finish(true);return;}paintTimer();if(S.left%5===0)save();},1000);}
+  paintTimer();
+}
+function paintTimer(){
+  const t=document.getElementById("timer");
+  if(S.latihan){t.textContent="LATIHAN";t.classList.remove("alert");return;}
+  const m=Math.floor(S.left/60),s=S.left%60;
+  t.textContent=String(m).padStart(2,"0")+":"+String(s).padStart(2,"0");
+  t.classList.toggle("alert",S.left<=300);
+}
+
+function qid(){return S.order[S.pos];}
+function render(){
+  const id=qid(),Q=FLAT[id];
+  document.getElementById("secTag").textContent=Q.sec;
+  document.getElementById("secTag").className="sec-tag "+Q.sec;
+  document.getElementById("qNum").textContent="Soal "+(S.pos+1);
+  document.getElementById("qSub").textContent=Q.sec==="TWK"?"Tes Wawasan Kebangsaan":Q.sec==="TIU"?"Tes Intelegensia Umum":"Tes Karakteristik Pribadi";
+  document.getElementById("qText").textContent=Q.q;
+  document.getElementById("posInfo").textContent=(S.pos+1)+" / "+N;
+  document.getElementById("btnFlag").textContent=(S.flag[id]?"⚑ Ditandai Ragu":"⚑ Ragu-ragu");
+
+  const box=document.getElementById("optBox");box.innerHTML="";
+  Q.o.forEach((txt,i)=>{
+    const d=document.createElement("div");
+    d.className="opt"+(S.ans[id]===i?" sel":"");
+    d.innerHTML='<div class="ltr">'+L[i]+'</div><div class="txt"></div>';
+    d.querySelector(".txt").textContent=txt;
+    d.onclick=()=>{S.ans[id]=i;save();render();};
+    box.appendChild(d);
+  });
+
+  const le=document.getElementById("liveExp");le.innerHTML="";
+  if(S.latihan&&S.ans[id]!==null){
+    const opts=box.children;
+    if(Q.sec==="TKP"){
+      const best=Q.s.indexOf(5);opts[best].classList.add("correct");
+      le.innerHTML='<div class="exp"><b>Poin Anda: '+Q.s[S.ans[id]]+'/5</b> (opsi terbaik: '+L[best]+')<br>'+Q.p+'</div>';
+    }else{
+      opts[Q.a].classList.add("correct");
+      if(S.ans[id]!==Q.a)opts[S.ans[id]].classList.add("wrong");
+      le.innerHTML='<div class="exp"><b>Kunci: '+L[Q.a]+'</b> — '+(S.ans[id]===Q.a?"Jawaban Anda BENAR (+5)":"Jawaban Anda SALAH (0)")+'<br>'+Q.p+'</div>';
+    }
+  }
+  paintNav();
+}
+function paintNav(){
+  const g=document.getElementById("navGrid");g.innerHTML="";let last="";
+  S.order.forEach((id,p)=>{
+    if(FLAT[id].sec!==last){last=FLAT[id].sec;const s=document.createElement("div");s.className="sep";s.textContent=last;g.appendChild(s);}
+    const b=document.createElement("button");
+    b.className="nb"+(S.ans[id]!==null?" done":"")+(S.flag[id]?" flag":"")+(p===S.pos?" cur":"");
+    b.textContent=p+1;b.onclick=()=>{S.pos=p;save();render();};
+    g.appendChild(b);
+  });
+  document.getElementById("progressTxt").textContent=S.ans.filter(a=>a!==null).length+"/"+N+" terjawab";
+}
+function go(d){const n=S.pos+d;if(n<0||n>=N)return;S.pos=n;save();render();}
+function toggleFlag(){const id=qid();S.flag[id]=!S.flag[id];save();render();}
+function jumpFirstEmpty(){const p=S.order.findIndex(id=>S.ans[id]===null);if(p<0){alert("Semua soal sudah dijawab. 👍");return;}S.pos=p;save();render();}
+document.addEventListener("keydown",e=>{
+  if(!document.getElementById("s-exam").classList.contains("active"))return;
+  const k=e.key.toUpperCase();
+  if(L.includes(k)&&k.length===1){S.ans[qid()]=L.indexOf(k);save();render();}
+  else if(e.key==="ArrowRight")go(1);
+  else if(e.key==="ArrowLeft")go(-1);
+  else if(e.key===" "){e.preventDefault();toggleFlag();}
+});
+function confirmFinish(){
+  const kosong=S.ans.filter(a=>a===null).length;
+  if(confirm("Akhiri ujian sekarang?\n\nSoal belum dijawab: "+kosong+"\nJawaban tidak dapat diubah setelah selesai."))finish(false);
+}
+function finish(auto){
+  if(tick)clearInterval(tick);
+  S.finished=true;if(!S.latihan)S.used=DUR-S.left;save();
+  renderResult(auto);show("s-result");
+}
+
+function score(){
+  const r={TWK:{c:0,w:0,e:0,s:0},TIU:{c:0,w:0,e:0,s:0},TKP:{s:0,e:0,zero:0}};
+  FLAT.forEach((Q,i)=>{
+    const a=S.ans[i];
+    if(Q.sec==="TKP"){if(a===null){r.TKP.e++;}else{r.TKP.s+=Q.s[a];}}
+    else{if(a===null)r[Q.sec].e++;else if(a===Q.a){r[Q.sec].c++;r[Q.sec].s+=5;}else r[Q.sec].w++;}
+  });
+  return r;
+}
+function renderResult(auto){
+  const r=score(),total=r.TWK.s+r.TIU.s+r.TKP.s;
+  const pass=r.TWK.s>=PG.TWK&&r.TIU.s>=PG.TIU&&r.TKP.s>=PG.TKP;
+  document.getElementById("rName").textContent=S.name;
+  document.getElementById("rTotal").textContent=total;
+  const st=document.getElementById("rStatus");
+  st.textContent=pass?"LULUS PASSING GRADE":"BELUM LULUS PASSING GRADE";
+  st.className="pill "+(pass?"pass":"fail");
+  const gagal=[];if(r.TWK.s<PG.TWK)gagal.push("TWK");if(r.TIU.s<PG.TIU)gagal.push("TIU");if(r.TKP.s<PG.TKP)gagal.push("TKP");
+  document.getElementById("rNote").textContent=(auto?"⏱ Waktu habis — ujian berakhir otomatis. ":"")+(pass?"Selamat! Ketiga ambang batas terpenuhi. Pertahankan pada tes asli.":"Perlu perbaikan pada: "+gagal.join(", ")+". Pelajari pembahasan lalu ulangi simulasi.");
+
+  const rows=[
+    ["TWK",r.TWK.c+" benar / "+r.TWK.w+" salah / "+r.TWK.e+" kosong",r.TWK.s,PG.TWK,r.TWK.s>=PG.TWK],
+    ["TIU",r.TIU.c+" benar / "+r.TIU.w+" salah / "+r.TIU.e+" kosong",r.TIU.s,PG.TIU,r.TIU.s>=PG.TIU],
+    ["TKP","Total poin dari 45 soal ("+r.TKP.e+" kosong)",r.TKP.s,PG.TKP,r.TKP.s>=PG.TKP]
+  ];
+  document.getElementById("rTable").innerHTML=rows.map(x=>
+    '<tr><td><b>'+x[0]+'</b><div class="bar"><i style="width:'+Math.min(100,(x[2]/(x[0]==="TWK"?150:x[0]==="TIU"?175:225))*100)+'%"></i></div></td><td>'+x[1]+'</td><td><b>'+x[2]+'</b></td><td>'+x[3]+'</td><td style="color:'+(x[4]?"#16a34a":"#dc2626")+';font-weight:800">'+(x[4]?"✔ Lulus":"✘ Belum")+'</td></tr>').join("");
+
+  const m=Math.floor(S.used/60),s=S.used%60;
+  document.getElementById("rStat").innerHTML=
+    '<div><b>'+S.ans.filter(a=>a!==null).length+'</b><span class="muted">Terjawab</span></div>'+
+    '<div><b>'+S.ans.filter(a=>a===null).length+'</b><span class="muted">Kosong</span></div>'+
+    '<div><b>'+S.flag.filter(Boolean).length+'</b><span class="muted">Ragu-ragu</span></div>'+
+    '<div><b>'+(S.latihan?"—":m+"m "+s+"s")+'</b><span class="muted">Waktu dipakai</span></div>'+
+    '<div><b>'+Math.round(total/550*100)+'%</b><span class="muted">Capaian skor</span></div>';
+}
+
+function openReview(f){revFilter=f;renderReview();show("s-review");}
+function renderReview(){
+  const fs=[["all","Semua"],["wrong","Salah / Poin < 5"],["empty","Kosong"],["flag","Ragu-ragu"],["TWK","TWK"],["TIU","TIU"],["TKP","TKP"]];
+  document.getElementById("revFilters").innerHTML=fs.map(f=>'<button class="btn2'+(revFilter===f[0]?" on":"")+'" onclick="openReview(\''+f[0]+'\')">'+f[1]+'</button>').join("");
+  const box=document.getElementById("revBox");box.innerHTML="";
+  let count=0;
+  S.order.forEach((id,p)=>{
+    const Q=FLAT[id],a=S.ans[id];
+    const isWrong=Q.sec==="TKP"?(a===null||Q.s[a]<5):(a!==Q.a);
+    if(revFilter==="wrong"&&!isWrong)return;
+    if(revFilter==="empty"&&a!==null)return;
+    if(revFilter==="flag"&&!S.flag[id])return;
+    if(["TWK","TIU","TKP"].includes(revFilter)&&Q.sec!==revFilter)return;
+    count++;
+    const d=document.createElement("div");d.className="qreview";
+    let head='<div class="qhead"><div class="row"><span class="sec-tag '+Q.sec+'">'+Q.sec+'</span><b>Soal '+(p+1)+'</b>'+(S.flag[id]?'<span class="badge">⚑ Ragu-ragu</span>':'')+'</div><div style="font-size:13px;font-weight:700;color:'+
+      (Q.sec==="TKP"?(a===null?"#dc2626":"#0f172a"):(a===Q.a?"#16a34a":"#dc2626"))+'">'+
+      (Q.sec==="TKP"?("Poin: "+(a===null?0:Q.s[a])+"/5"):(a===null?"Tidak dijawab (0)":a===Q.a?"Benar (+5)":"Salah (0)"))+'</div></div>';
+    let opts=Q.o.map((t,i)=>{
+      let cls="opt";
+      if(Q.sec==="TKP"){if(a===i)cls+=" sel";if(Q.s[i]===5)cls+=" correct";}
+      else{if(i===Q.a)cls+=" correct";if(a===i&&i!==Q.a)cls+=" wrong";}
+      const tag=Q.sec==="TKP"?' <b style="color:#64748b">('+Q.s[i]+' poin)</b>':'';
+      return '<div class="'+cls+'" style="cursor:default"><div class="ltr">'+L[i]+'</div><div class="txt">'+esc(t)+tag+'</div></div>';
+    }).join("");
+    d.innerHTML=head+'<div class="qtext">'+esc(Q.q)+'</div>'+opts+
+      '<div class="exp"><b>'+(Q.sec==="TKP"?"Opsi terbaik: "+L[Q.s.indexOf(5)]:"Kunci jawaban: "+L[Q.a])+'</b><br>'+esc(Q.p)+'</div>';
+    box.appendChild(d);
+  });
+  if(!count)box.innerHTML='<p class="muted">Tidak ada soal pada filter ini. 🎉</p>';
+}
+function esc(t){return String(t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\n/g,"<br>");}
+window.addEventListener("beforeunload",e=>{if(S&&!S.finished&&document.getElementById("s-exam").classList.contains("active")){save();e.preventDefault();e.returnValue="";}});
+</script>
+</body>
+</html>
